@@ -1,0 +1,90 @@
+name: bid4style
+description: "A new Flutter project."
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.4.0
+  dio: ^5.8.0+1
+  flutter_native_splash: ^2.4.4
+  icons_launcher: ^3.0.1
+  provider: ^6.1.5
+  fluttertoast: ^8.2.12
+  shared_preferences: ^2.5.3
+  pin_code_fields: ^8.0.1
+  flutter_otp_text_field: ^1.5.1+1
+  flutter_svg: ^2.2.0
+  image_picker: ^1.1.2
+  image_cropper: ^9.1.0
+  path_provider: ^2.1.5
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+  flutter_lints: ^5.0.0
+
+flutter_native_splash:
+  color: "#FFFFFF" # White background
+  image: assets/icons/bid1.png # Path to your icon/image
+  android: true # Enable for Android
+  ios: true # Enable for iOS
+  android_12:
+    image: assets/icons/bid1.png
+    color: "#FFFFFF"
+    android_gravity: center
+    fill: false
+    icon_background_color: "#FFFFFF"
+    # fullscreen: true
+    image_dark_android: assets/icons/bid1.png
+    # color_android: "#FFFFFF"
+    # background_image_android: assets/images/apk_icon.png
+    # background_image_dark_android: assets/images/apk_icon.png
+
+
+
+icons_launcher:
+  image_path: "assets/icons/bid1.png"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true
+
+
+flutter:
+
+
+  uses-material-design: true
+
+
+  assets:
+    - assets/icons/
+    - assets/images/
+
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
