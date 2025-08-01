@@ -36,7 +36,6 @@ class SignupViewModel with ChangeNotifier {
   }
 
   String? emailotp;
-  String? passwordotp;
 
   clearController() {
     emailController.clear();
@@ -99,7 +98,9 @@ class SignupViewModel with ChangeNotifier {
       'email': emailController.text.trim(),
       'password': passwordController.text.trim(),
       'user_name': nameController.text.trim(),
-      // 'bio': bioController.text.trim(),
+      'store_name': nameController.text.trim(),
+      'location': nameController.text.trim(),
+      'kyc_no': nameController.text.trim(),
       'phone_no': phoneController.text.trim(),
       'role': selectedRole!.toLowerCase().trim(),
     };
@@ -275,11 +276,18 @@ class SignupViewModel with ChangeNotifier {
 
   getforOTP() async {
     emailotp = await SharedPreferencesHelper.getEmailotp();
-    passwordotp = await SharedPreferencesHelper.getPasswordotp();
-    print("Current emailOtp: $emailotp, Current passwordOtp: $passwordotp");
+
+    print("Current emailOtp: $emailotp, ");
   }
 
   Future<void> otpCheck(context) async {
+    otpCheck(context).onError((error, stackTrace) {
+      print("Error ---$error");
+      Helper.toastMessage(message: error.toString(), color: AppColors.red);
+    });
+  }
+
+  Future<void> otpCheckfunction(context) async {
     try {
       isLoading = true;
       await getforOTP();
@@ -294,19 +302,9 @@ class SignupViewModel with ChangeNotifier {
       final response = await AuthRepository().VerifyOtp(OTPdata);
       UserModel user = UserModel.fromJson(response);
 
-      // if (user.status == true && user.data?.otp == null) {
-      //   print("Null operation in verify account");
-      //   Helper.toastMessage(
-      //       message: "Registration failed", color: AppColors.green);
-      //   // Navigator.push(
-      //   //   context,
-      //   //   MaterialPageRoute(builder: (_) => AccountCreated()),
-      //   // );
-      // }
+      print("USER STATUS----- ${user.status}");
 
-      if (user.status == true
-      // && user.data?.token != null
-      ) {
+      if (user.status == true) {
         // await SharedPreferencesHelper.saveToken(user.data?.token);
         // final response1 = await ProfileRepository().userdetail();
         // UserDetailModal details = UserDetailModal.fromJson(response1);
@@ -332,14 +330,6 @@ class SignupViewModel with ChangeNotifier {
           color: AppColors.red,
         );
       }
-    } catch (e) {
-      print("IN catch in Otp verify $e");
-      String message = "$e"; // Fallback to stringified exception
-      if (e is DioError && e.response != null) {
-        message =
-            e.response!.data['message'] as String? ?? 'OTP verification failed';
-      }
-      Helper.toastMessage(message: message, color: AppColors.red);
     } finally {
       isLoading = false;
       notifyListeners();

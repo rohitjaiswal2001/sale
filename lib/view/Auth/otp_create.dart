@@ -1,5 +1,5 @@
 import 'package:bid4style/utils/Appcolor.dart';
-import 'package:bid4style/viewModal/AuthviewModel/SignupViewModel.dart';
+import 'package:bid4style/viewModal/AuthviewModel/ForgotPasswordViewModel.dart';
 import 'package:bid4style/widgets/ButtonWidget.dart';
 import 'package:bid4style/widgets/CustomTextstyle.dart';
 import 'package:flutter/material.dart';
@@ -8,26 +8,38 @@ import 'package:provider/provider.dart';
 
 import '../../widgets/CommonStartLayout.dart';
 
-class OtpCreate extends StatefulWidget {
+class OtpCreate extends StatelessWidget {
   const OtpCreate({super.key});
 
   @override
-  State<OtpCreate> createState() => _OtpCreateState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => ForgotPasswordViewModel(),
+      child: _OtpCreate(),
+    );
+  }
 }
 
-class _OtpCreateState extends State<OtpCreate> {
+class _OtpCreate extends StatefulWidget {
+  const _OtpCreate();
+
+  @override
+  State<_OtpCreate> createState() => _OtpCreateState();
+}
+
+class _OtpCreateState extends State<_OtpCreate> {
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SignupViewModel>().onlyTimer(context);
+      // context.read<ForgotPasswordViewModel>().onlyStartTimer();
     });
   }
 
   @override
   void dispose() {
-    context.read<SignupViewModel>().disposeTimer();
+    // context.read<ForgotPasswordViewModel>().disposeTimer();
     super.dispose();
   }
 
@@ -37,12 +49,12 @@ class _OtpCreateState extends State<OtpCreate> {
     return WillPopScope(
       onWillPop: () async {
         // Dispose the timer when navigating away
-        context.read<SignupViewModel>().disposeTimer();
+        context.read<ForgotPasswordViewModel>().disposeTimer();
         return true; // Allow the page to pop
       },
       child: Scaffold(
         body: CommonStartLayout(
-          WidgetList: Consumer<SignupViewModel>(
+          WidgetList: Consumer<ForgotPasswordViewModel>(
             builder: (context, viewModel, child) {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -83,6 +95,7 @@ class _OtpCreateState extends State<OtpCreate> {
                       onCompleted: (value) {
                         viewModel.otpText = value;
                         print("OTP oncomplete: ${viewModel.otpText}");
+
                         viewModel.otpCheck(context);
                       },
                       onSubmitted: (String code) {
@@ -105,7 +118,7 @@ class _OtpCreateState extends State<OtpCreate> {
                       TextButton(
                         onPressed: viewModel.remainingTime > 0
                             ? null
-                            : () => viewModel.resendLink(context),
+                            : () => viewModel.resendOtp(context),
                         style: ButtonStyle(
                           foregroundColor: WidgetStateProperty.all(
                             viewModel.remainingTime > 0

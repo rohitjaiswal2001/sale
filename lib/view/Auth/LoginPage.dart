@@ -15,10 +15,27 @@ import '../../widgets/ButtonWidget.dart';
 import '../../widgets/TextFieldWidget.dart';
 import 'Signup.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
-  // @override
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    Provider.of<LoginViewModel>(context, listen: false).clear();
+    // context.watch()<LoginViewModel>().clear();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(

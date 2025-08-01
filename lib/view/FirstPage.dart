@@ -16,9 +16,6 @@ class FirstPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("DATA CLEAR FORM FIRST PAGE");
-    SharedPreferencesHelper.clearAllData();
-
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
 
