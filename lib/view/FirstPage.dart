@@ -107,10 +107,10 @@ class FirstPage extends StatelessWidget {
                       const SizedBox(height: 16),
                       InkWell(
                         onTap: () {
-                          Provider.of<SignupViewModel>(
-                            context,
-                            listen: false,
-                          ).clearController();
+                          // Provider.of<SignupViewModel>(
+                          //   context,
+                          //   listen: false,
+                          // ).clearController();
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => CreateAccount()),

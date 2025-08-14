@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:bid4style/services/session_manager.dart';
 import 'package:bid4style/utils/Appcolor.dart';
+import 'package:bid4style/view/Auth/Profile/viewprofile.dart';
 import 'package:bid4style/view/homepage.dart';
 
-import 'package:bid4style/viewModal/AuthviewModel/SignupViewModel.dart';
+import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
+import 'package:bid4style/viewModal/profileviewModal/profileviewmodal.dart';
+import 'package:bid4style/widgets/navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -43,40 +46,14 @@ void main() async {
   String initialRoute = await getInitialRoute();
   HttpOverrides.global = MyHttpOverrides();
   runApp(
-    MainApp(initialRoute: initialRoute),
-
-    // MultiProvider(
-    //   providers: [
-    //     // ChangeNotifierProvider(create: (context) => LoginViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => SignupViewModel()),
-    //     // // ChangeNotifierProvider(create: (context) => ForgotPasswordViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => ChoosePlanViewModel()),
-    //     // // ChangeNotifierProvider(create: (context) => HelpViewmodal()),
-    //     // // ChangeNotifierProvider(create: (context) => UpdateAccountViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => AddJournalViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => Homepageviewmodal()),
-    //     // ChangeNotifierProvider(create: (context) => Userdetailviewmodel()),
-    //     // // ChangeNotifierProvider(create: (context) => DetailsViewModal()),
-    //     // ChangeNotifierProvider(create: (context) => UpdateProfileViewModel()),
-    //     // // ChangeNotifierProvider(create: (context) => RenameJournalViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => ViewJournalViewModal()),
-    //     // ChangeNotifierProvider(create: (context) => ShareViewModal()),
-    //     // ChangeNotifierProvider(create: (context) => FolderViewmodel()),
-    //     // ChangeNotifierProvider(create: (context) => FolderDetailViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => FolderSearchViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => SharedJournalViewModel()),
-    //     // // ChangeNotifierProvider(create: (context) => PrivacyPolicyViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => JournalSearchViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => AudioAnimationViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => Subscriptionviewmodal()),
-    //     // ChangeNotifierProvider(create: (context) => ResumeViewModel()),
-    //     // ChangeNotifierProvider(create: (context) => Requestplanviewmodal()),
-    //     // ChangeNotifierProvider(create: (context) => SharedFolderViewModel()),
-
-    //     // // ChangeNotifierProvider(create: (context) => ActivityProvider()),
-    //   ],
-    //   child: MainApp(initialRoute: initialRoute),
-    // ),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserDetailViewmodel()),
+        // Add other providers as needed
+        // ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+      ],
+      child: MainApp(initialRoute: initialRoute),
+    ),
   );
 }
 
@@ -124,7 +101,7 @@ class MainApp extends StatelessWidget {
 
       initialRoute: initialRoute,
       routes: {
-        '/home': (context) => Homepage(),
+        '/home': (context) => NavBar(),
         '/first': (context) => FirstPage(),
         // '/introtap': (context) => TapToNextImageWidget()
       },

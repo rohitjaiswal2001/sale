@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../Models/UserModel.dart';
+import '../Models/loginSignupModal.dart';
 import '../data/network/api_services.dart';
 import '../data/network/network_services.dart';
 import '../resource/aapurl.dart';
@@ -59,4 +59,6 @@ class AuthRepository {
 
     return response;
   }
+
+  Future googleLoginApi(Map<String, String?> map) async {}
 }

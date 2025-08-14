@@ -1,11 +1,15 @@
 class AppUrl {
-  static const String baseUrl = "http://192.168.3.62:3003";
-
+  static const String baseUrl = 'https://bid4stylepgre.visionvivante.in';
+  // "http://192.168.3.62:3003";
+  // Auth
   static const String login = '$baseUrl/auth/login';
   static const String logout = '$baseUrl/auth/logout';
   static const String forgotPassword = '$baseUrl/auth/forgot-password';
   static const String signUp = '$baseUrl/auth/signup';
   static const String verifyOtp = '$baseUrl/auth/check-otp';
+
+  //Profile
+  static const String getProfile = '$baseUrl/auth/profile';
   static const String getPlan = '$baseUrl/v1/tier';
   static const String submithelp = '$baseUrl/v1/contact-us';
   static const String updatepassword = '$baseUrl/auth/reset-password';

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import '../Models/UserDetailModal.dart';
+import '../Models/profileModal.dart';
 import '../data/network/api_services.dart';
 import '../data/network/network_services.dart';
 import '../resource/aapurl.dart';
@@ -8,11 +8,12 @@ import '../services/session_manager.dart';
 
 class ProfileRepository {
   final BaseApiServices _apiServices = NetworkApiService();
-  Future<Map<String, dynamic>> userdetail() async {
+
+  Future<Map<String, dynamic>> getProfileData() async {
     _apiServices.token = await SharedPreferencesHelper.getToken();
-    print("User__Detail TOKEN---${_apiServices.token}");
+
     Map<String, dynamic> response = await _apiServices.getGetApiResponse(
-      AppUrl.Userdetail,
+      AppUrl.getProfile,
     );
 
     return response;
@@ -98,9 +99,8 @@ class ProfileRepository {
   Future<Map<String, dynamic>> logout() async {
     _apiServices.token = await SharedPreferencesHelper.getToken();
     print("User__Detail TOKEN---${_apiServices.token}");
-    Map<String, dynamic> response = await _apiServices.getPostApiResponse(
+    Map<String, dynamic> response = await _apiServices.getGetApiResponse(
       AppUrl.logout,
-      {},
     );
 
     return response;

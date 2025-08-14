@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:bid4style/Models/UserDetailModal.dart';
+import 'package:bid4style/Models/profileModal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferencesHelper {
@@ -138,7 +138,7 @@ class SharedPreferencesHelper {
   }
 
   // Function to save a user to shared preferences
-  static Future<void> saveUserToPrefs(UserDetailModal user) async {
+  static Future<void> saveUserToPrefs(ProfileModel user) async {
     try {
       print("user comes ${user.toJson()}");
       final prefs = await SharedPreferences.getInstance();
@@ -155,7 +155,7 @@ class SharedPreferencesHelper {
   }
 
   // Function to retrieve a user from shared preferences
-  static Future<UserDetailModal?> getUserFromPrefs() async {
+  static Future<ProfileModel?> getUserFromPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       // Get JSON string from shared preferences
@@ -165,7 +165,7 @@ class SharedPreferencesHelper {
         // Decode JSON string to a map
         final userMap = jsonDecode(jsonString) as Map<String, dynamic>;
         // Create a user object from the map
-        final user = UserDetailModal.fromJson(userMap);
+        final user = ProfileModel.fromJson(userMap);
         print(
           'User detail retrieved from shared preferences: ${user.toJson()}',
         );

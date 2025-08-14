@@ -2,9 +2,8 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:bid4style/Models/UserDetailModal.dart';
+import 'package:bid4style/Models/profileModal.dart';
 import 'package:bid4style/repo/authRepo.dart';
-import 'package:bid4style/view/Auth/Account_created.dart';
 import 'package:bid4style/view/Auth/LoginPage.dart';
 import 'package:bid4style/view/Auth/otp_create.dart';
 import 'package:bid4style/view/Auth/update%20password.dart';
@@ -12,7 +11,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../../Models/UserModel.dart';
+import '../../Models/loginSignupModal.dart';
 import '../../Utils/Appcolor.dart';
 import '../../Utils/Helper.dart';
 
@@ -98,9 +97,12 @@ class SignupViewModel with ChangeNotifier {
       'email': emailController.text.trim(),
       'password': passwordController.text.trim(),
       'user_name': nameController.text.trim(),
-      'store_name': nameController.text.trim(),
-      'location': nameController.text.trim(),
-      'kyc_no': nameController.text.trim(),
+
+      if (selectedRole == 'Seller') ...{
+        'store_name': nameController.text.trim(),
+        'location': nameController.text.trim(),
+        'kyc_no': nameController.text.trim(),
+      },
       'phone_no': phoneController.text.trim(),
       'role': selectedRole!.toLowerCase().trim(),
     };

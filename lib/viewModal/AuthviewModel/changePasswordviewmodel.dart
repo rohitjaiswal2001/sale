@@ -1,22 +1,23 @@
+import 'package:bid4style/Models/loginSignupModal.dart';
+import 'package:bid4style/repo/authRepo.dart';
+import 'package:bid4style/utils/Appcolor.dart';
+import 'package:bid4style/utils/Helper.dart';
 import 'package:bid4style/view/Auth/LoginPage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
-import '../../Models/loginSignupModal.dart';
-import '../../Utils/Appcolor.dart';
-import '../../Utils/Helper.dart';
-import '../../repo/authRepo.dart';
-import '../../services/session_manager.dart';
-
-class UpdateAccountViewModel extends ChangeNotifier {
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
+class Changepasswordviewmodel with ChangeNotifier {
   bool _isLoading = false;
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool get isLoading => _isLoading;
-  set isLoading(val) {
-    _isLoading = val;
+
+  set isLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
   }
+
+  final FocusNode emailFocusNode = FocusNode();
+  final FocusNode passwordFocusNode = FocusNode();
+  final FocusNode confirmPasswordFocusNode = FocusNode();
 
   clearController() {
     passwordController.clear();
@@ -29,15 +30,6 @@ class UpdateAccountViewModel extends ChangeNotifier {
 
   final passwordController = TextEditingController();
   final confirmpasswordController = TextEditingController();
-
-  //focus
-
-  final FocusNode emailFocusNode = FocusNode();
-  final FocusNode passwordFocusNode = FocusNode();
-  final FocusNode confirmPasswordFocusNode = FocusNode();
-
-  //UserModal sharedPref
-  // UserModel? usr;
 
   // Form Validation
   void validateForm(String email, String password, BuildContext context) {
@@ -73,7 +65,7 @@ class UpdateAccountViewModel extends ChangeNotifier {
 
       if (user.status = true) {
         Helper.toastMessage(
-          message: user.message ?? 'Something went wrong',
+          message: user.message ?? 'Password Changed',
           color: AppColors.themecolor,
         );
 

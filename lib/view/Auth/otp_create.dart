@@ -28,47 +28,96 @@ class _OtpCreate extends StatefulWidget {
 }
 
 class _OtpCreateState extends State<_OtpCreate> {
+  late ForgotPasswordViewModel _viewModel;
+
   @override
   void initState() {
     super.initState();
+    _viewModel = context.read<ForgotPasswordViewModel>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // context.read<ForgotPasswordViewModel>().onlyStartTimer();
+      // Start timer when OTP screen loads
+      _viewModel.startTimerIfNeeded();
     });
   }
 
   @override
   void dispose() {
-    // context.read<ForgotPasswordViewModel>().disposeTimer();
+    _viewModel.disposeTimer();
     super.dispose();
   }
 
-  // @override
+  Widget _buildResendSection(
+    ForgotPasswordViewModel viewModel,
+    BuildContext context,
+  ) {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Didn't receive code? "),
+            TextButton(
+              onPressed: viewModel.canResend
+                  ? () => viewModel.resendOtp(context)
+                  : null,
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(
+                  viewModel.canResend ? AppColors.themecolor : AppColors.grey,
+                ),
+              ),
+              child: viewModel.isLoadingResend
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.themecolor,
+                      ),
+                    )
+                  : const Text("Resend"),
+            ),
+          ],
+        ),
+        if (!viewModel.canResend)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              viewModel.remainingSeconds > 0
+                  ? "Please wait ${viewModel.remainingSeconds} seconds before resending."
+                  : "Please wait before resending.",
+              style: TextStyle(color: AppColors.grey, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Dispose the timer when navigating away
-        context.read<ForgotPasswordViewModel>().disposeTimer();
-        return true; // Allow the page to pop
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          // Dispose the timer when navigating away
+          _viewModel.disposeTimer();
+        }
       },
       child: Scaffold(
         body: CommonStartLayout(
-          WidgetList: Consumer<ForgotPasswordViewModel>(
-            builder: (context, viewModel, child) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "We have emailed you a",
-                    style: CustomTextStyle.heading18,
-                  ),
-                  Text("verification code", style: CustomTextStyle.heading30),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.025),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    height: 100,
-                    child: PinCodeTextField(
+          WidgetList: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("We have emailed you a", style: CustomTextStyle.heading18),
+              Text("verification code", style: CustomTextStyle.heading30),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.025),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 100,
+                child: Consumer<ForgotPasswordViewModel>(
+                  builder: (context, viewModel, child) {
+                    return PinCodeTextField(
                       blinkWhenObscuring: false,
                       useHapticFeedback: false,
                       autoDismissKeyboard: true,
@@ -78,7 +127,6 @@ class _OtpCreateState extends State<_OtpCreate> {
                         selectedColor: AppColors.themecolor,
                         shape: PinCodeFieldShape.box,
                         activeBorderWidth: 2,
-                        // activeFillColor: AppColors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         borderWidth: 2,
                         inactiveBorderWidth: 2,
@@ -87,65 +135,44 @@ class _OtpCreateState extends State<_OtpCreate> {
                         disabledColor: AppColors.themecolor,
                         activeColor: AppColors.themecolor,
                       ),
-                      // enableActiveFill: true,
                       keyboardType: TextInputType.number,
                       appContext: context,
                       length: 6,
-
                       onCompleted: (value) {
                         viewModel.otpText = value;
-                        print("OTP oncomplete: ${viewModel.otpText}");
-
                         viewModel.otpCheck(context);
                       },
                       onSubmitted: (String code) {
                         viewModel.otpText = code;
-                        print("OTP onsubmited: ${viewModel.otpText}");
                         viewModel.otpCheck(context);
                       },
-
                       onChanged: (value) {
-                        viewModel.otpText = value;
-                        print("OTP onChange: ${viewModel.otpText}");
+                        // Don't trigger rebuilds on every character change
+                        viewModel.otpTextSilent = value;
                       },
-                    ),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Didn't receive code? "),
-                      TextButton(
-                        onPressed: viewModel.remainingTime > 0
-                            ? null
-                            : () => viewModel.resendOtp(context),
-                        style: ButtonStyle(
-                          foregroundColor: WidgetStateProperty.all(
-                            viewModel.remainingTime > 0
-                                ? AppColors.grey
-                                : AppColors.themecolor,
-                          ),
-                        ),
-                        child: const Text("Resend"),
-                      ),
-                    ],
-                  ),
-                  if (viewModel.remainingTime > 0)
-                    Text(
-                      "Wait for ${viewModel.remainingTime} seconds to resend the link.",
-                    ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                  ButtonWidget(
+                    );
+                  },
+                ),
+              ),
+              Consumer<ForgotPasswordViewModel>(
+                builder: (context, viewModel, child) {
+                  return _buildResendSection(viewModel, context);
+                },
+              ),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+              Consumer<ForgotPasswordViewModel>(
+                builder: (context, viewModel, child) {
+                  return ButtonWidget(
                     loading: viewModel.isLoading,
                     name: "Verify",
                     ontap: () {
                       viewModel.isLoading ? null : viewModel.otpCheck(context);
                     },
                     width: MediaQuery.of(context).size.width * 0.8,
-                  ),
-                ],
-              );
-            },
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),

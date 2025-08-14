@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "796204666773",
+    "project_id": "bid4style-79d08",
+    "storage_bucket": "bid4style-79d08.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796204666773:android:63cbedcbbd7101fdc0309c",
+        "android_client_info": {
+          "package_name": "com.vision.bid4style"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZi5j0NejZ3R1hzHCaS1RlH9BpxCO2wQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

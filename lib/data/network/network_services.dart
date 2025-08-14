@@ -189,8 +189,7 @@ class NetworkApiService implements BaseApiServices {
         'user-agent': 'Dart/3.6 (dart:io)',
         'accept-encoding': 'gzip',
         'Content-Type': 'multipart/form-data',
-        if (token != null && token!.isNotEmpty)
-          'Authorization': 'Bearer $token',
+        if (token != null && token!.isNotEmpty) 'x-access-token': '$token',
       };
 
       if (kDebugMode) {
@@ -274,7 +273,7 @@ class NetworkApiService implements BaseApiServices {
   Map<String, String> _getHeaders() {
     return {
       'Accept': 'application/json',
-      if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
+      if (token != null && token!.isNotEmpty) 'x-access-token': '$token',
       'Content-Type': 'application/json',
     };
   }

@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    Provider.of<LoginViewModel>(context, listen: false).clear();
+    LoginViewModel().clear();
     // context.watch()<LoginViewModel>().clear();
     super.dispose();
   }
@@ -120,9 +120,10 @@ class _LoginPageState extends State<LoginPage> {
                             ontap: () {
                               viewModel.isLoading
                                   ? null
-                                  : viewModel.validateForm(context);
+                                  : viewModel.signInWithGoogle(context: context);
                             },
                           ),
+
                           const SizedBox(height: 20),
                           Padding(
                             padding: const EdgeInsets.only(

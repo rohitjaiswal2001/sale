@@ -1,196 +1,246 @@
-import 'package:bid4style/Utils/Helper.dart';
-import 'package:bid4style/repo/userRepo.dart';
-import 'package:bid4style/services/session_manager.dart';
+import 'package:bid4style/Models/profileModal.dart';
 import 'package:bid4style/utils/Appcolor.dart';
-import 'package:bid4style/utils/imagecropper.dart';
+import 'package:bid4style/utils/Helper.dart';
+import 'package:bid4style/utils/permissions.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
-import 'package:dio/dio.dart';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
-import 'dart:convert';
+import 'package:provider/provider.dart';
 import 'dart:io';
 
-
-import '../../Models/UserDetailModal.dart';
-
-
-class UpdateProfileViewModel extends ChangeNotifier {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController ageController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-
-  String? _imgurl;
-
-  String? get imgurl => _imgurl;
-
-  set imgurl(String? value) {
-    _imgurl = value;
-    notifyListeners();
-  }
-
-  File? selectedImage;
+class EditProfileViewModel with ChangeNotifier {
+  final formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final userNameController = TextEditingController();
+  final bioController = TextEditingController();
+  final profilePicController = TextEditingController();
+  File? _localImage; // Store local image file
   bool _isLoading = false;
 
+  final FocusNode usernamenameFocusNode = FocusNode();
+  final FocusNode emailFocusNode = FocusNode();
+  final FocusNode bioFocusNode = FocusNode();
+  final FocusNode userNameFocusNode = FocusNode();
+
+  final PermissionHandler _permissionHandler = PermissionHandler();
+
   bool get isLoading => _isLoading;
+  File? get localImage => _localImage;
 
-  set isLoading(bool value) {
-    _isLoading = value;
+  // Initialize controllers with existing profile data from UserDetailViewmodel
+  Future<void> initializeControllers(BuildContext context) async {
+    _isLoading = true;
     notifyListeners();
-  }
 
-  // Method to pick an image
-  Future<bool> pickImageProfile(BuildContext context) async {
-    final picker = ImagePicker();
-    final pickedImage = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if (pickedImage != null) {
-      // selectedImage = File(pickedImage.path);
-
-      selectedImage = await cropImage(context, pickedImage.path, false);
-
-      notifyListeners();
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  // Method to pick an image
-  Future<bool> clickImage(BuildContext context) async {
-    final clicker = ImagePicker();
-    final clickedImage = await clicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 25,
-        requestFullMetadata: false);
-
-    if (clickedImage != null) {
-      // selectedImage = File(clickedImage.path);
-
-      selectedImage = await cropImage(context, clickedImage.path, false);
-
-      notifyListeners();
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-// Remove image
-
-  Future<void> removeImageoption() async {
-    isLoading = true;
     try {
-      selectedImage = null; // Or set the image URL to a default or empty value
-      Userdetailviewmodel().profileimgUrl = '';
-      imgurl = null;
-      Userdetailviewmodel().clearCachedProfileImage();
-      // function for Api call to remove photo
-      notifyListeners();
-    } finally {
-      Userdetailviewmodel().profileimgPath == null;
-      selectedImage == null;
-      isLoading = false;
+      final userDetailViewModel = context.read<UserDetailViewmodel>();
+      print(
+        "UserDetailViewmodel accessed in EditProfileViewModel: $userDetailViewModel",
+      );
+      final profileData = userDetailViewModel.profiledata;
+      print("Profile data in EditProfileViewModel: ${profileData?.toJson()}");
 
-      notifyListeners();
-    }
-  }
-
-// Method to submit data to the API
-  Future<void> submitForm() async {
-    try {
-      isLoading = true;
-
-      // Prepare form fields
-      List<MapEntry<String, String>> fields = [
-        MapEntry('email', emailController.text.trim()),
-        MapEntry('name', nameController.text.trim()),
-        // Add additional fields if required
-        // MapEntry('phone', phoneController.text.trim()),
-        // MapEntry('age', ageController.text.trim()),
-      ];
-
-      // Prepare files
-      List<MapEntry<String, File>> files = [];
-      if (selectedImage != null) {
-        files.add(MapEntry('profile_image', selectedImage!));
-      }
-
-      // Call API
-      final response = await ProfileRepository().editProfileApI(fields, files);
-
-      print("Response-----${response["status"]}");
-
-      if (response['status'] == true) {
-        // Fetch updated user details and save locally
-        final response1 = await ProfileRepository().userdetail();
-        UserDetailModal details = UserDetailModal.fromJson(response1);
-        await SharedPreferencesHelper.saveUserToPrefs(details);
-
-        // Show success toast
-        Helper.toastMessage(
-            message:
-                response['data']['message'] ?? "Profile Updated Successfully",
-            color: AppColors.themecolor);
-
-        // Clear form inputs
-        Allclear();
-
-        // Navigate to the homepage (if applicable)
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Homepage()));
+      if (profileData?.data != null) {
+        emailController.text = profileData!.data!.email ?? '';
+        userNameController.text = profileData!.data!.userName ?? '';
+        bioController.text = profileData!.data!.bio ?? '';
+        profilePicController.text = profileData!.data!.profilePic ?? '';
+        _localImage = null; // Reset local image
+        print("Profile data initialized: ${profileData.data!.toJson()}");
       } else {
+        print("No profile data available to initialize");
         Helper.toastMessage(
-            message: "Failed to Update", color: AppColors.themecolor);
+          message: 'No profile data available',
+          color: AppColors.red,
+        );
       }
-    } on DioException catch (e) {
-      print("Error----$e");
-      if (e.response != null) {
-        print("Response data: ${e.response?.data}");
-        Helper.toastMessage(
-            message: "Failed to Update - $e", color: AppColors.red);
-      }
-      rethrow;
+    } catch (e) {
+      print("Error initializing controllers: $e");
+      Helper.toastMessage(
+        message: 'Failed to load profile data: $e',
+        color: AppColors.red,
+      );
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  // // Validate form fields
-  // bool validateForm() {
-  //   if (emailController.text.isEmpty ||
-  //       nameController.text.isEmpty ||
-  //       phoneController.text.isEmpty ||
-  //       !emailController.text.contains('@')) {
-  //     return false;
-  //   }
-  //   return true;
-  // }
+  // Pick image from camera or gallery with permission handling
+  Future<void> pickImage(BuildContext context, ImageSource source) async {
+    try {
+      bool hasPermission;
+      if (source == ImageSource.camera) {
+        hasPermission = await _permissionHandler.requestCameraPermission(
+          context,
+        );
+      } else {
+        hasPermission = await _permissionHandler.requestGalleryPermission(
+          context,
+        );
+      }
 
-  void Allclear() {
-    emailController.clear();
-    nameController.clear();
-    ageController.clear();
-    phoneController.clear();
+      if (!hasPermission) {
+        return; // Permission denied, exit
+      }
 
-    // selectedImage = null;
-    // imgurl = null;
-    //
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        _isLoading = true;
+        notifyListeners();
+
+        // Store local image file
+        _localImage = File(pickedFile.path);
+        print("Local image picked: ${_localImage!.path}");
+
+        // Optionally upload to server and get URL
+        // Uncomment the following lines when ready to upload to a server
+        /*
+        final imageUrl = await _uploadImageToServer(_localImage!);
+        profilePicController.text = imageUrl;
+        print("Profile picture URL updated: $imageUrl");
+        */
+
+        Helper.toastMessage(message: "Image selected", color: AppColors.grey);
+      }
+    } catch (e) {
+      print("Error picking image: $e");
+      Helper.toastMessage(
+        message: "Failed to pick image: $e",
+        color: AppColors.red,
+      );
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
-  void getEditDetail() async {
-    UserDetailModal? usrdata = await SharedPreferencesHelper.getUserFromPrefs();
-    print("User data ---${jsonEncode(usrdata)}");
-    nameController.text = (usrdata?.data?.user?.name).toString();
-    emailController.text = (usrdata?.data?.user?.email).toString();
-    ageController.text = (usrdata?.data?.user?.age).toString();
-    phoneController.text = (usrdata?.data?.user?.phone).toString();
-    imgurl = (usrdata?.data?.user?.profileImage).toString();
-    // selectedImage = (usrdata?.data?.user?.profileImage).toString();
+  // Placeholder method to simulate image upload to server
+  Future<String> _uploadImageToServer(File image) async {
+    // Replace with actual API call to upload image (e.g., to Firebase Storage)
+    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+    return "https://example.com/profile_pics/${DateTime.now().millisecondsSinceEpoch}.jpg";
+  }
 
+  // Example Firebase Storage implementation (uncomment when ready)
+  /*
+  Future<String> _uploadImageToServer(File image) async {
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_pics/${DateTime.now().millisecondsSinceEpoch}.jpg');
+      final uploadTask = await storageRef.putFile(image);
+      final imageUrl = await uploadTask.ref.getDownloadURL();
+      return imageUrl;
+    } catch (e) {
+      print("Error uploading image to Firebase Storage: $e");
+      throw Exception('Failed to upload image: $e');
+    }
+  }
+  */
+
+  // Remove profile picture
+  Future<void> removeProfilePicture() async {
+    try {
+      _localImage = null;
+      profilePicController.clear();
+      Helper.toastMessage(
+        message: "Profile picture removed",
+        color: AppColors.grey,
+      );
+    } catch (e) {
+      print("Error removing profile picture: $e");
+      Helper.toastMessage(
+        message: "Failed to remove profile picture: $e",
+        color: AppColors.red,
+      );
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // Save profile data
+  Future<void> saveProfile(BuildContext context) async {
+    if (!formKey.currentState!.validate()) return;
+
+    _isLoading = true;
     notifyListeners();
+
+    try {
+      // If local image exists, upload it to server
+      String? imageUrl;
+      if (_localImage != null) {
+        imageUrl = await _uploadImageToServer(_localImage!);
+        profilePicController.text = imageUrl;
+      }
+
+      final updatedData = Data(
+        email: emailController.text.trim(),
+        userName: userNameController.text.trim(),
+        bio: bioController.text.trim(),
+        profilePic: profilePicController.text.trim().isEmpty
+            ? null
+            : profilePicController.text.trim(),
+        role: context.read<UserDetailViewmodel>().profiledata?.data?.role,
+      );
+
+      // Update UserDetailViewmodel
+      final userDetailViewModel = context.read<UserDetailViewmodel>();
+      userDetailViewModel.setProfileData({
+        'status': true,
+        'message': 'Profile updated',
+        'data': updatedData.toJson(),
+      });
+
+      // Optionally, send data to backend API
+      // await ProfileRepository().updateProfile({
+      //   'email': emailController.text,
+      //   'username': userNameController.text,
+      //   'bio': bioController.text,
+      //   'profile_picture': profilePicController.text,
+      // });
+
+      Helper.toastMessage(
+        message: 'Profile updated successfully',
+        color: AppColors.grey,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      print("Error saving profile: $e");
+      Helper.toastMessage(
+        message: 'Failed to update profile: $e',
+        color: AppColors.red,
+      );
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Clear all controllers
+  void clear() {
+    emailController.clear();
+    userNameController.clear();
+    bioController.clear();
+    profilePicController.clear();
+    _localImage = null;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    userNameController.dispose();
+    bioController.dispose();
+    profilePicController.dispose();
+    emailFocusNode.dispose();
+    usernamenameFocusNode.dispose();
+    bioFocusNode.dispose();
+    super.dispose();
   }
 }

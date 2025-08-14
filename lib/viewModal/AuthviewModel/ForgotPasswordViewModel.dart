@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:bid4style/Models/UserModel.dart';
+import 'package:bid4style/Models/loginSignupModal.dart';
 import 'package:bid4style/Utils/Appcolor.dart';
 import 'package:bid4style/repo/authRepo.dart';
 import 'package:bid4style/services/session_manager.dart';
@@ -14,31 +14,45 @@ class ForgotPasswordViewModel with ChangeNotifier {
 
   bool _isLoading = false;
   bool _isLoadingResend = false;
-  int _remainingTime = 60;
+  bool _canResend = false;
+  int _remainingSeconds = 0;
   Timer? _timer;
   String? _otpText;
   String? emailotp;
+  bool _isDisposed = false;
+  bool _isInitialized = false;
 
   ForgotPasswordViewModel() {
+    // Initialize synchronously to avoid issues
+    _canResend = false;
     _initialize();
   }
 
   // Initialization method
-  void _initialize() async {
-    await _loadEmailFromPrefs();
-    _startTimer();
+  void _initialize() {
+    if (!_isInitialized) {
+      _isInitialized = true;
+      // Load email asynchronously without blocking constructor
+      _loadEmailFromPrefs();
+    }
   }
 
   // Getters
   bool get isLoading => _isLoading;
   bool get isLoadingResend => _isLoadingResend;
-  int get remainingTime => _remainingTime;
+  bool get canResend => _canResend;
+  int get remainingSeconds => _remainingSeconds;
   String? get otpText => _otpText;
 
   // Setters with notify
   set otpText(String? value) {
     _otpText = value;
     notifyListeners();
+  }
+
+  // Private setter without notification for performance
+  set otpTextSilent(String? value) {
+    _otpText = value;
   }
 
   set isLoadingResend(bool val) {
@@ -86,8 +100,8 @@ class ForgotPasswordViewModel with ChangeNotifier {
   Future<void> resendOtp(BuildContext context) async {
     if (_isLoadingResend) return;
 
-    isLoadingResend = true;
-    _startTimer();
+    _isLoadingResend = true;
+    notifyListeners();
 
     try {
       await _loadEmailFromPrefs();
@@ -99,12 +113,13 @@ class ForgotPasswordViewModel with ChangeNotifier {
         'email': emailotp!,
       });
       final user = UserModel.fromJson(response);
-      print("object");
+
       if (user.status == true) {
         Helper.toastMessage(
           message: user.message ?? 'OTP resent successfully',
           color: AppColors.grey,
         );
+        _startTimer(); // Start timer only after successful resend
       } else {
         Helper.toastMessage(
           message: user.message ?? 'Something went wrong',
@@ -112,47 +127,37 @@ class ForgotPasswordViewModel with ChangeNotifier {
         );
       }
     } catch (e) {
-      print("Catch----$e");
       Helper.toastMessage(message: e.toString(), color: AppColors.red);
     } finally {
-      isLoadingResend = false;
+      _isLoadingResend = false;
+      notifyListeners();
     }
   }
 
   Future<void> otpCheck(BuildContext context) async {
-    print("otpCheck: Started");
-
     if (otpText == null || otpText!.isEmpty) {
-      print("otpCheck: OTP is empty");
       Helper.toastMessage(message: "Please enter OTP", color: AppColors.red);
       return;
     }
 
     _isLoading = true;
     notifyListeners();
-    print("otpCheck: isLoading set to true");
 
     try {
-      print("otpCheck: Loading email from SharedPreferences...");
       await _loadEmailFromPrefs();
-      print("otpCheck: Loaded email -> $emailotp");
 
       if (emailotp == null || emailotp!.isEmpty) {
-        print("otpCheck: Email not found in SharedPreferences");
         throw "Email not found";
       }
 
-      print("otpCheck: Sending OTP verification request...");
       final response = await AuthRepository().VerifyOtp({
         'email': emailotp!,
         'otp': otpText!.trim(),
       });
 
       final user = UserModel.fromJson(response);
-      print("otpCheck: Response received -> ${user.status}");
 
       if (user.status == true) {
-        print("otpCheck: OTP verified successfully");
         Helper.toastMessage(
           message: "Verification Successful",
           color: AppColors.grey,
@@ -162,40 +167,67 @@ class ForgotPasswordViewModel with ChangeNotifier {
           MaterialPageRoute(builder: (_) => UpdateAccount(email: emailotp!)),
         );
       } else {
-        print("otpCheck: OTP verification failed - ${user.message}");
         Helper.toastMessage(
           message: user.message ?? 'OTP verification failed',
           color: AppColors.red,
         );
       }
     } catch (e) {
-      print("otpCheck: Error occurred - $e");
       Helper.toastMessage(message: e.toString(), color: AppColors.red);
     } finally {
       _isLoading = false;
       notifyListeners();
-      print("otpCheck: isLoading set to false, operation completed");
     }
   }
 
   Future<void> _loadEmailFromPrefs() async {
     emailotp = await SharedPreferencesHelper.getEmailotp();
-    notifyListeners();
+    // Don't notify listeners here - this is internal data loading
   }
 
+  // Accurate countdown timer that works like a real clock
   void _startTimer() {
-    _remainingTime = 60;
+    _canResend = false;
+    _remainingSeconds = 60;
     _timer?.cancel();
+    print(
+      "Timer started - remaining: $_remainingSeconds, canResend: $_canResend",
+    );
 
+    // Update every second for accurate countdown like a real clock
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingTime > 0) {
-        _remainingTime--;
+      if (!_isDisposed) {
+        _remainingSeconds--;
+
+        if (_remainingSeconds <= 0) {
+          _remainingSeconds = 0;
+          _canResend = true;
+          _isLoadingResend = false;
+          timer.cancel();
+          print("Timer finished - canResend: $_canResend");
+        }
+
+        // Update UI every second for real-time countdown
+        print(
+          "Timer update - remaining: $_remainingSeconds, canResend: $_canResend",
+        );
         notifyListeners();
       } else {
         timer.cancel();
-        isLoadingResend = false;
       }
     });
+
+    notifyListeners(); // Initial notification
+  }
+
+  void startTimerIfNeeded() {
+    // Start timer when OTP screen loads for the first time
+    if ((_timer == null || !_timer!.isActive) && !_canResend) {
+      print(
+        "Starting timer - remaining seconds: $_remainingSeconds, canResend: $_canResend",
+      );
+      _startTimer();
+    }
   }
 
   void disposeTimer() {
@@ -203,7 +235,15 @@ class ForgotPasswordViewModel with ChangeNotifier {
   }
 
   @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
+
+  @override
   void dispose() {
+    _isDisposed = true;
     emailController.dispose();
     _timer?.cancel();
     super.dispose();
