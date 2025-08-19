@@ -61,4 +61,15 @@ class AuthRepository {
   }
 
   Future googleLoginApi(Map<String, String?> map) async {}
+
+  Future changepassword(Map<String, dynamic> data) async {
+    dynamic response = await _apiServices.getPostApiResponse(
+      AppUrl.changePassword,
+      data,
+    );
+
+    return response;
+  }
+
+  Future<void> updateProfile(Map<String, String> map) async {}
 }

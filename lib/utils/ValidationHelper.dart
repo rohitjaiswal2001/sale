@@ -119,20 +119,18 @@ class ValidationHelper {
     return null; // Valid
   }
 
+  static String? validatePhoneInternational(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Enter your phone number';
+    }
 
-static String? validatePhoneInternational(String? value){
-  if (value == null || value.trim().isEmpty) {
-    return 'Enter your phone number';
+    // Allows +, digits, spaces, and dashes
+    final regex = RegExp(r'^\+?[\d\s\-]{10,15}$');
+
+    if (!regex.hasMatch(value.trim())) {
+      return 'Enter a valid phone number';
+    }
+
+    return null;
   }
-
-  // Allows +, digits, spaces, and dashes
-  final regex = RegExp(r'^\+?[\d\s\-]{10,15}$');
-
-  if (!regex.hasMatch(value.trim())) {
-    return 'Enter a valid phone number';
-  }
-
-  return null;
-}
-
 }

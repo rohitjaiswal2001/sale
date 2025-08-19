@@ -4,9 +4,11 @@
 import 'package:bid4style/utils/textstyle.dart';
 import 'package:bid4style/view/Auth/Profile/editprofile.dart';
 import 'package:bid4style/view/Auth/Profile/changePassword.dart';
+import 'package:bid4style/view/BidManagment/Mybid.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 
 import 'package:bid4style/viewModal/profileviewModal/profileviewmodal.dart';
+import 'package:bid4style/widgets/apploader.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,11 +17,11 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Consumer<UserDetailViewmodel>(
-        builder: (context, viewModel, child) {
-          viewModel.loadProfile();
-          return Column(
+    return Consumer<UserDetailViewmodel>(
+      builder: (context, viewModel, child) {
+        viewModel.loadProfile();
+        return Scaffold(
+          body: Column(
             children: [
               Expanded(
                 child: ListView(
@@ -110,7 +112,12 @@ class ProfileScreen extends StatelessWidget {
                       leadingIcon: Icons.gavel,
                       title: 'Bid Management',
                       onTap: () {
-                        // Handle bid management
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BidManagementScreen(),
+                          ),
+                        );
                       },
                     ),
                     CustomListTile(
@@ -143,9 +150,9 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

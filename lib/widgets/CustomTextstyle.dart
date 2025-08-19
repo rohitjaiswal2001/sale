@@ -25,7 +25,7 @@ class CustomTextStyle {
   );
   static TextStyle heading20 = TextStyle(
     fontSize: 20,
-    color: AppColors.themecolor,
+    color: AppColors.black,
     fontWeight: FontWeight.w700,
   );
   static TextStyle heading18w400 = TextStyle(

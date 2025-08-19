@@ -1,4 +1,6 @@
-import 'package:bid4style/Models/profileModal.dart';
+import 'package:bid4style/Models/loginSignupModal.dart';
+import 'package:bid4style/Models/profileModal.dart' hide Data;
+import 'package:bid4style/repo/authRepo.dart';
 import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/utils/Helper.dart';
 import 'package:bid4style/utils/permissions.dart';
@@ -16,7 +18,6 @@ class EditProfileViewModel with ChangeNotifier {
   final bioController = TextEditingController();
   final profilePicController = TextEditingController();
   File? _localImage; // Store local image file
-  bool _isLoading = false;
 
   final FocusNode usernamenameFocusNode = FocusNode();
   final FocusNode emailFocusNode = FocusNode();
@@ -25,7 +26,15 @@ class EditProfileViewModel with ChangeNotifier {
 
   final PermissionHandler _permissionHandler = PermissionHandler();
 
+  bool _isLoading = false;
+
   bool get isLoading => _isLoading;
+
+  set isLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
   File? get localImage => _localImage;
 
   // Initialize controllers with existing profile data from UserDetailViewmodel
@@ -163,12 +172,9 @@ class EditProfileViewModel with ChangeNotifier {
 
   // Save profile data
   Future<void> saveProfile(BuildContext context) async {
-    if (!formKey.currentState!.validate()) return;
-
-    _isLoading = true;
-    notifyListeners();
-
     try {
+      isLoading = true;
+
       // If local image exists, upload it to server
       String? imageUrl;
       if (_localImage != null) {
@@ -194,22 +200,24 @@ class EditProfileViewModel with ChangeNotifier {
         'data': updatedData.toJson(),
       });
 
+      await Future.delayed(Duration(seconds: 10));
+
       // Optionally, send data to backend API
-      // await ProfileRepository().updateProfile({
-      //   'email': emailController.text,
-      //   'username': userNameController.text,
-      //   'bio': bioController.text,
-      //   'profile_picture': profilePicController.text,
-      // });
+      await AuthRepository().updateProfile({
+        'email': emailController.text,
+        'username': userNameController.text,
+        'bio': bioController.text,
+        'profile_picture': profilePicController.text,
+      });
 
       Helper.toastMessage(
         message: 'Profile updated successfully',
         color: AppColors.grey,
       );
 
-      if (context.mounted) {
-        Navigator.pop(context);
-      }
+      // if (context.mounted) {
+      //   Navigator.pop(context);
+      // }
     } catch (e) {
       print("Error saving profile: $e");
       Helper.toastMessage(
@@ -217,8 +225,7 @@ class EditProfileViewModel with ChangeNotifier {
         color: AppColors.red,
       );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      isLoading = false;
     }
   }
 
@@ -242,5 +249,43 @@ class EditProfileViewModel with ChangeNotifier {
     usernamenameFocusNode.dispose();
     bioFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> changePassword(
+    String oldPassword,
+    String newPassword,
+    BuildContext context,
+  ) async {
+    try {
+      isLoading = true;
+
+      Map<String, String> data = {
+        'email': oldPassword,
+        'password': newPassword,
+
+        //  passwordController.text.trim(),
+      };
+
+      final response = await AuthRepository().changepassword(data);
+
+      if (response['status'] = true) {
+        Helper.toastMessage(
+          message: response['message'] ?? 'Something went wrong',
+          color: AppColors.themecolor,
+        );
+      } else {
+        Helper.toastMessage(
+          message: 'Something went wrong',
+          color: AppColors.red,
+        );
+      }
+      // Success handling (e.g., navigate to the login screen)
+    } catch (e) {
+      print("e-Updatepassword--->>$e");
+
+      // Error handling (e.g., display a snackbar)
+    } finally {
+      isLoading = false;
+    }
   }
 }

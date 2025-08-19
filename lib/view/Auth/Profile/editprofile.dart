@@ -4,6 +4,7 @@ import 'package:bid4style/view/Auth/widgets/authsmallwidgets.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/editprofileviewmodal.dart';
 import 'package:bid4style/widgets/ButtonWidget.dart';
 import 'package:bid4style/widgets/TextFieldWidget.dart';
+import 'package:bid4style/widgets/apploader.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,85 +49,88 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<EditProfileViewModel>();
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Edit Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () async {
-              await viewModel.saveProfile(context);
-            },
+    return LoadingOverlay(
+      isLoading: viewModel.isLoading,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
-      body: viewModel.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: viewModel.formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Circular container for profile picture
-                      GestureDetector(
-                        onTap: () => _showImageOptions(context, viewModel),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: AppColors.grey,
-                          backgroundImage:
-                              viewModel.profilePicController.text.isNotEmpty
-                              ? CachedNetworkImageProvider(
-                                  viewModel.profilePicController.text,
-                                )
-                              : null,
-                          child: viewModel.profilePicController.text.isEmpty
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: AppColors.white,
-                                )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextDeclarationWidget(text: "Email"),
-                      TexfieldWidget(
-                        color: AppColors.white,
-                        controller: viewModel.emailController,
-                        validator: ValidationHelper.validateEmail,
-                        hint: "Enter your email",
-                        focusNode: viewModel.emailFocusNode,
-                        nextFocusNode: viewModel.userNameFocusNode,
-                      ),
-                      TextDeclarationWidget(text: "Username"),
-                      TexfieldWidget(
-                        color: AppColors.white,
-                        controller: viewModel.userNameController,
-                        validator: ValidationHelper.validateName,
-                        hint: "Enter Username",
-                        focusNode: viewModel.userNameFocusNode,
-                        nextFocusNode: viewModel.bioFocusNode,
-                      ),
-                      TextDeclarationWidget(text: "Bio (Optional)"),
-                      TexfieldWidget(
-                        controller: viewModel.bioController,
-                        hint: "Bio",
-                        focusNode: viewModel.bioFocusNode,
-                        maxLine: 5,
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+          title: const Text('Edit Profile'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: () async {
+                if (viewModel.formKey.currentState!.validate()) return;
+
+                viewModel.saveProfile(context);
+              },
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: viewModel.formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Circular container for profile picture
+                  GestureDetector(
+                    onTap: () => _showImageOptions(context, viewModel),
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: AppColors.grey,
+                      backgroundImage:
+                          viewModel.profilePicController.text.isNotEmpty
+                          ? CachedNetworkImageProvider(
+                              viewModel.profilePicController.text,
+                            )
+                          : null,
+                      child: viewModel.profilePicController.text.isEmpty
+                          ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: AppColors.white,
+                            )
+                          : null,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  TextDeclarationWidget(text: "Email"),
+                  TexfieldWidget(
+                    color: AppColors.white,
+                    controller: viewModel.emailController,
+                    validator: ValidationHelper.validateEmail,
+                    hint: "Enter your email",
+                    focusNode: viewModel.emailFocusNode,
+                    nextFocusNode: viewModel.userNameFocusNode,
+                  ),
+                  TextDeclarationWidget(text: "Username"),
+                  TexfieldWidget(
+                    color: AppColors.white,
+                    controller: viewModel.userNameController,
+                    validator: ValidationHelper.validateName,
+                    hint: "Enter Username",
+                    focusNode: viewModel.userNameFocusNode,
+                    nextFocusNode: viewModel.bioFocusNode,
+                  ),
+                  TextDeclarationWidget(text: "Bio (Optional)"),
+                  TexfieldWidget(
+                    controller: viewModel.bioController,
+                    hint: "Bio",
+                    focusNode: viewModel.bioFocusNode,
+                    maxLine: 5,
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 

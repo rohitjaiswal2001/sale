@@ -33,4 +33,13 @@ class UserDetailViewmodel with ChangeNotifier {
       print("Error setting profile data: $e");
     }
   }
+
+  void updatePassword(email, password, BuildContext context) {
+
+
+    
+  }
+
+
+
 }

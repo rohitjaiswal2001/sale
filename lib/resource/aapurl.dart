@@ -13,13 +13,14 @@ class AppUrl {
   static const String getPlan = '$baseUrl/v1/tier';
   static const String submithelp = '$baseUrl/v1/contact-us';
   static const String updatepassword = '$baseUrl/auth/reset-password';
+    static const String changePassword = '$baseUrl/auth/change-password';
   static const String addJournal = '$baseUrl/v1/create-journal';
   static const String sortedjournal = '$baseUrl/v1/sorted-journals';
   static const String deletejournal = '$baseUrl/v1/delete-journal/';
   static const String singleDetail = '$baseUrl/v1/get-single-journal/';
   static const String Userdetail = '$baseUrl/user-detail';
   static const String deleteUser = '$baseUrl/delete?id=';
-  static const String changePassword = '$baseUrl/change-password/';
+
   static const String editprofile = '$baseUrl/update-profile';
   static const String removepic = '$baseUrl/remove-profile-picture';
   static const String renamejournal = '$baseUrl/v1/rename-journal/';
