@@ -3,11 +3,14 @@ import 'package:bid4style/Models/profileModal.dart' hide Data;
 import 'package:bid4style/repo/authRepo.dart';
 import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/utils/Helper.dart';
+import 'package:bid4style/utils/imagecropper.dart';
 import 'package:bid4style/utils/permissions.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 
@@ -17,12 +20,26 @@ class EditProfileViewModel with ChangeNotifier {
   final userNameController = TextEditingController();
   final bioController = TextEditingController();
   final profilePicController = TextEditingController();
+  bool _isProfileImageLoading = false;
+  String _profileimgUrl = "";
   File? _localImage; // Store local image file
 
   final FocusNode usernamenameFocusNode = FocusNode();
   final FocusNode emailFocusNode = FocusNode();
   final FocusNode bioFocusNode = FocusNode();
   final FocusNode userNameFocusNode = FocusNode();
+  String? _profileimgPath;
+
+  String? _imgurl;
+
+  String? get imgurl => _imgurl;
+
+  set imgurl(String? value) {
+    _imgurl = value;
+    notifyListeners();
+  }
+
+  File? selectedImage;
 
   final PermissionHandler _permissionHandler = PermissionHandler();
 
@@ -30,8 +47,29 @@ class EditProfileViewModel with ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
+  String get profileimgUrl => _profileimgUrl;
+
+  set profileimgUrl(String value) {
+    _profileimgUrl = value;
+    notifyListeners();
+  }
+
   set isLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  String? get profileimgPath => _profileimgPath;
+
+  set profileimgPath(String? value) {
+    _profileimgPath = value;
+    notifyListeners();
+  }
+
+  bool get isProfileImageLoading => _isProfileImageLoading;
+
+  set isProfileImageLoading(bool value) {
+    _isProfileImageLoading = value;
     notifyListeners();
   }
 
@@ -286,6 +324,216 @@ class EditProfileViewModel with ChangeNotifier {
       // Error handling (e.g., display a snackbar)
     } finally {
       isLoading = false;
+    }
+  }
+
+  /// Downloads the profile image from the URL, caches it, and returns the local file path
+  Future<String?> cacheProfileImage(String imageUrl) async {
+    if (imageUrl.isEmpty) {
+      print("Profile image URL is empty");
+      return null;
+    }
+
+    try {
+      isProfileImageLoading = true;
+      // Get the temporary directory
+      final tempDir = await getTemporaryDirectory();
+      // Create a unique filename based on the URL or user ID
+      final fileName = 'profile_${imageUrl.hashCode}.jpg';
+      final filePath = '${tempDir.path}/$fileName';
+      final file = File(filePath);
+
+      // Check if the image is already cached
+      if (await file.exists()) {
+        print("Using cached profile image: $filePath");
+        return filePath;
+      }
+
+      // Clear old cached images for this user
+      await clearOldCachedImages(tempDir, fileName);
+
+      // Download the image
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        // Save the image to the cache
+        await file.writeAsBytes(response.bodyBytes);
+        print("Profile image cached: $filePath");
+        return filePath;
+      } else {
+        print("Failed to download image: ${response.statusCode}");
+        // Helper.toastMessage(
+        //     message: 'Failed to download profile image', color: AppColors.red);
+        return null;
+      }
+    } catch (e) {
+      print("Error caching profile image: $e");
+      Helper.toastMessage(
+        message: 'Error downloading profile image',
+        color: AppColors.red,
+      );
+      return null;
+    } finally {
+      isProfileImageLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Clears old cached profile images for the user
+  Future<void> clearOldCachedImages(
+    Directory tempDir,
+
+    String currentFileName,
+  ) async {
+    try {
+      final files = tempDir.listSync();
+      for (var file in files) {
+        if (file is File &&
+            file.path.contains('profile_') &&
+            file.path != '${tempDir.path}/$currentFileName') {
+          await file.delete();
+          print("Deleted old cached image: ${file.path}");
+        }
+      }
+    } catch (e) {
+      print("Error clearing old cached images: $e");
+    }
+  }
+
+  /// Clears the cached profile image
+  Future<void> clearCachedProfileImage() async {
+    if (_profileimgPath != null) {
+      try {
+        final file = File(_profileimgPath!);
+        if (await file.exists()) {
+          await file.delete();
+          print("Cached profile image deleted: $_profileimgPath");
+        }
+        _profileimgPath = null;
+        notifyListeners();
+      } catch (e) {
+        print("Error deleting cached profile image: $e");
+      }
+    }
+  }
+
+  /// Returns the appropriate ImageProvider for the profile image
+  ImageProvider getProfileImageProvider({File? selectedImage}) {
+    // Prioritize locally selected image
+    if (selectedImage != null && selectedImage.existsSync()) {
+      print("Using Selected FileImage: ${selectedImage.path}");
+      return FileImage(selectedImage);
+    }
+    // Check for cached image
+    else if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
+      print("Using Cached FileImage: $_profileimgPath");
+      return FileImage(File(_profileimgPath!));
+    }
+    // Use profile URL if available and non-empty
+    else if (_profileimgUrl.isNotEmpty && _profileimgUrl != "null") {
+      print("Using NetworkImage: $_profileimgUrl");
+      return NetworkImage(_profileimgUrl);
+    }
+    // Fallback to default asset
+    else {
+      print("Using AssetImage: assets/images/created.png");
+      return AssetImage('assets/images/created.png');
+    }
+  }
+
+  ImageProvider? getProfileImageProviderProfileView({File? selectedImage}) {
+    // Prioritize locally selected image
+    if (selectedImage != null && selectedImage.existsSync()) {
+      print("Using Selected FileImage: ${selectedImage.path}");
+      return FileImage(selectedImage);
+    }
+    // Check for cached image
+    else if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
+      print("Using Cached FileImage: $_profileimgPath");
+      return FileImage(File(_profileimgPath!));
+    }
+    // Use profile URL if available and non-empty
+    else if (profileimgUrl.isNotEmpty && profileimgUrl != "null") {
+      print("Using NetworkImage: $_profileimgUrl");
+      return NetworkImage(_profileimgUrl);
+    }
+    // Fallback to default asset
+    else {
+      // print("Using AssetImage: assets/images/created.png");
+      return null;
+      // AssetImage('assets/images/created.png');
+    }
+  }
+
+  /// Forces a refresh of the cached profile image
+  Future<void> refreshProfileImage() async {
+    if (_profileimgUrl.isNotEmpty) {
+      final tempDir = await getTemporaryDirectory();
+      final fileName = 'profile_${_profileimgUrl.hashCode}.jpg';
+      final filePath = '${tempDir.path}/$fileName';
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
+        print("Cleared cached image for refresh: $filePath");
+      }
+      await cacheProfileImage(_profileimgUrl);
+    }
+  }
+
+  // Method to pick an image
+  Future<bool> pickImageProfile(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedImage != null) {
+      selectedImage = File(pickedImage.path);
+
+      // selectedImage = await cropImage(context, pickedImage.path, false);
+
+      notifyListeners();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Method to pick an image
+  Future<bool> clickImage(BuildContext context) async {
+    final clicker = ImagePicker();
+    final clickedImage = await clicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 25,
+      requestFullMetadata: false,
+    );
+
+    if (clickedImage != null) {
+      // selectedImage = File(clickedImage.path);
+
+      selectedImage = await cropImage(context, clickedImage.path, false);
+
+      notifyListeners();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Remove image
+
+  Future<void> removeImageoption() async {
+    isLoading = true;
+    try {
+      selectedImage = null; // Or set the image URL to a default or empty value
+      profileimgUrl = '';
+      imgurl = null;
+      clearCachedProfileImage();
+      // function for Api call to remove photo
+      notifyListeners();
+    } finally {
+      profileimgPath == null;
+      selectedImage == null;
+      isLoading = false;
+
+      notifyListeners();
     }
   }
 }

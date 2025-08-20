@@ -5,6 +5,7 @@ import 'package:bid4style/utils/textstyle.dart';
 import 'package:bid4style/view/Auth/Profile/editprofile.dart';
 import 'package:bid4style/view/Auth/Profile/changePassword.dart';
 import 'package:bid4style/view/BidManagment/Mybid.dart';
+import 'package:bid4style/view/BidManagment/createBid.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 
 import 'package:bid4style/viewModal/profileviewModal/profileviewmodal.dart';
@@ -115,7 +116,27 @@ class ProfileScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => BidManagementScreen(),
+                            builder: (_) => BidManagementScreen(
+                              tabTitles: [
+                                'All Bids',
+                                'Won Bids',
+                                'Lost Bids',
+                                'Ongoing',
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    CustomListTile(
+                      leadingIcon: Icons.gavel,
+                      title: 'Add new Bid',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddNewAuctionScreen(),
                           ),
                         );
                       },

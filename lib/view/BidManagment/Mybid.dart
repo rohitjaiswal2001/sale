@@ -1,4 +1,5 @@
 import 'package:bid4style/utils/Appcolor.dart';
+import 'package:bid4style/view/BidManagment/createBid.dart';
 import 'package:bid4style/widgets/CustomTextstyle.dart';
 import 'package:flutter/material.dart';
 
@@ -57,7 +58,17 @@ class _BidManagementScreenState extends State<BidManagementScreen> {
         title: Text(widget.title),
         titleTextStyle: CustomTextStyle.heading20,
         centerTitle: true,
-        actions: [IconButton(onPressed: null, icon: const Icon(Icons.add))],
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AddNewAuctionScreen()),
+              );
+            },
+            icon: const Icon(Icons.add),
+          ),
+        ],
       ),
       body: Column(
         children: [
