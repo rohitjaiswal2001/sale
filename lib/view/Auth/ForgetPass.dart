@@ -9,7 +9,7 @@ import 'package:bid4style/widgets/CustomTextstyle.dart';
 import 'package:bid4style/widgets/ButtonWidget.dart';
 import 'package:bid4style/widgets/TextFieldWidget.dart';
 import 'package:bid4style/viewModal/AuthviewModel/ForgotPasswordViewModel.dart';
-import '../Auth/widgets/authsmallwidgets.dart';
+import 'widgets/textsmallwidgets.dart';
 
 class ForgetPass extends StatefulWidget {
   const ForgetPass({super.key});

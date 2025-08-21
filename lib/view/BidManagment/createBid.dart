@@ -184,7 +184,7 @@
 
 import 'package:bid4style/Utils/ValidationHelper.dart';
 import 'package:bid4style/utils/Appcolor.dart';
-import 'package:bid4style/view/Auth/widgets/authsmallwidgets.dart';
+import 'package:bid4style/view/Auth/widgets/textsmallwidgets.dart';
 import 'package:bid4style/widgets/CustomTextstyle.dart';
 import 'package:bid4style/widgets/TextFieldWidget.dart';
 import 'package:bid4style/widgets/dropdownwidget.dart';

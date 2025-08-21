@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import '../Models/profileModal.dart';
 import '../data/network/api_services.dart';
 import '../data/network/network_services.dart';
@@ -19,15 +18,6 @@ class ProfileRepository {
     return response;
   }
 
-  // Future storageApi()async{
-
-  //  _apiServices.token = await SharedPreferencesHelper.getToken();
-  //     print("User__Detail TOKEN---${_apiServices.token}");
-  //     Map<String, dynamic> response =
-  //         await _apiServices.getGetApiResponse(AppUrl.storage);
-  // return response;
-
-  // }
   Future deleteAccount(String id) async {
     _apiServices.token = await SharedPreferencesHelper.getToken();
     print("User Id to be deleted is ----$id");
@@ -50,32 +40,31 @@ class ProfileRepository {
     return response;
   }
 
-  Future changePasswordfun(String id, data) async {
-    _apiServices.token = await SharedPreferencesHelper.getToken();
-    print("Password to be changed of ----$id");
-    dynamic response = await _apiServices.getPostApiResponse(
-      AppUrl.changePassword + id,
-      data,
-    );
+  // Future changePasswordfun(String id, data) async {
+  //   _apiServices.token = await SharedPreferencesHelper.getToken();
+  //   print("Password to be changed of ----$id");
+  //   dynamic response = await _apiServices.getPostApiResponse(
+  //     AppUrl.changePassword ,
+  //     data,
+  //   );
+  //   return response;
+  // }
 
-    return response;
-  }
+  // Future<Map<String, dynamic>> editProfileApI(
+  //   List<MapEntry<String, String>> fields,
+  //   List<MapEntry<String, File>>? files,
+  // ) async {
+  //   _apiServices.token = await SharedPreferencesHelper.getToken();
+  //   print("Token_____${_apiServices.token}");
 
-  Future<Map<String, dynamic>> editProfileApI(
-    List<MapEntry<String, String>> fields,
-    List<MapEntry<String, File>>? files,
-  ) async {
-    _apiServices.token = await SharedPreferencesHelper.getToken();
-    print("Token_____${_apiServices.token}");
-
-    dynamic response = await _apiServices.multipartPostApiResponseDio(
-      fields: fields,
-      files: files,
-      AppUrl.editprofile,
-    );
-    print("Response of Multipart--$response");
-    return response;
-  }
+  //   dynamic response = await _apiServices.multipartPostApiResponseDio(
+  //     fields: fields,
+  //     files: files,
+  //     AppUrl.editprofile,
+  //   );
+  //   print("Response of Multipart--$response");
+  //   return response;
+  // }
 
   Future updatefcmtoken(String fcmtoken) async {
     _apiServices.token = await SharedPreferencesHelper.getToken();
@@ -103,6 +92,30 @@ class ProfileRepository {
       AppUrl.logout,
     );
 
+    return response;
+  }
+
+  Future<Map<String, dynamic>> updateProfile(
+    Map<String, String> mapdata,
+  ) async {
+    dynamic response = await _apiServices.getPostApiResponse(
+      AppUrl.editprofile,
+      mapdata,
+    );
+
+    return response;
+  }
+
+  Future<Map<String, dynamic>> uploadProfilePicture(
+    List<MapEntry<String, String>>? fields,
+    List<MapEntry<String, File>>? files,
+  ) async {
+    dynamic response = await _apiServices.multipartPostApiResponseDio(
+      fields: fields,
+      files: files,
+      AppUrl.uploadprofilepicture,
+    );
+    print("Response of Multipart--$response");
     return response;
   }
 }

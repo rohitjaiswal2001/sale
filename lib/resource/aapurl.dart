@@ -10,10 +10,11 @@ class AppUrl {
 
   //Profile
   static const String getProfile = '$baseUrl/auth/profile';
+  static const String uploadprofilepicture = '$baseUrl/auth/upload-image';
   static const String getPlan = '$baseUrl/v1/tier';
   static const String submithelp = '$baseUrl/v1/contact-us';
   static const String updatepassword = '$baseUrl/auth/reset-password';
-    static const String changePassword = '$baseUrl/auth/change-password';
+  static const String changePassword = '$baseUrl/auth/change-password';
   static const String addJournal = '$baseUrl/v1/create-journal';
   static const String sortedjournal = '$baseUrl/v1/sorted-journals';
   static const String deletejournal = '$baseUrl/v1/delete-journal/';

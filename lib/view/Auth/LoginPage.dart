@@ -1,7 +1,7 @@
 import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/utils/extention.dart';
 import 'package:bid4style/view/Auth/ForgetPass.dart';
-import 'package:bid4style/view/Auth/widgets/authsmallwidgets.dart';
+import 'package:bid4style/view/Auth/widgets/textsmallwidgets.dart';
 import 'package:bid4style/widgets/Appcontainer.dart';
 import 'package:bid4style/widgets/CommonStartLayout.dart';
 import 'package:bid4style/widgets/CustomTextstyle.dart';

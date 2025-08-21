@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bid4style/utils/Helper.dart';
+import 'package:bid4style/view/FirstPage.dart';
 
 import 'package:bid4style/viewModal/AuthviewModel/SignupViewModel.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
@@ -13,16 +14,11 @@ import '../../services/session_manager.dart';
 
 class Logoutviewmodel extends ChangeNotifier {
   bool _isLogoutLoading = false;
-
   bool get isLogoutLoading => _isLogoutLoading;
 
   set isLogoutLoading(bool value) {
     _isLogoutLoading = value;
     notifyListeners();
-  }
-
-  Logoutviewmodel() {
-    _isLogoutLoading = false;
   }
 
   void resetLogoutState() {
@@ -40,12 +36,12 @@ class Logoutviewmodel extends ChangeNotifier {
       print("Logout API response: $response");
 
       if (response['status'] == true) {
-        print("API logout successful, clearing data...");
+        // print("API logout successful, clearing data...");
 
-        // await clearCachedProfileImage();
-        await SharedPreferencesHelper.clearAllData();
+        // await SharedPreferencesHelper.clearAllData();
 
-        UserDetailViewmodel().clearProfileData();
+        // UserDetailViewmodel().clearProfileData();
+        // SignupViewModel().clearController();
 
         if (context.mounted) {
           Helper.toastMessage(
@@ -55,7 +51,6 @@ class Logoutviewmodel extends ChangeNotifier {
         }
         return true;
       } else {
-        print("API logout failed");
         if (context.mounted) {
           Helper.toastMessage(
             message: response['message'] ?? 'Something went wrong',
@@ -75,20 +70,17 @@ class Logoutviewmodel extends ChangeNotifier {
       return false;
     } finally {
       await SharedPreferencesHelper.clearAllData();
-      // clearCachedProfileImage();
 
+      UserDetailViewmodel().clearProfileData();
       SignupViewModel().clearController();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const FirstPage()),
+        (route) => false, // removes all previous routes
+      );
 
       resetLogoutState();
     }
-  }
-
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
-  set isLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
   }
 }

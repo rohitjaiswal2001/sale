@@ -1,6 +1,6 @@
-import 'package:bid4style/Models/loginSignupModal.dart';
-import 'package:bid4style/Models/profileModal.dart' hide Data;
+import 'package:bid4style/Models/profileModal.dart';
 import 'package:bid4style/repo/authRepo.dart';
+import 'package:bid4style/repo/userRepo.dart';
 import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/utils/Helper.dart';
 import 'package:bid4style/utils/imagecropper.dart';
@@ -18,7 +18,7 @@ class EditProfileViewModel with ChangeNotifier {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final userNameController = TextEditingController();
-  final bioController = TextEditingController();
+  final phoneController = TextEditingController();
   final profilePicController = TextEditingController();
   bool _isProfileImageLoading = false;
   String _profileimgUrl = "";
@@ -26,7 +26,7 @@ class EditProfileViewModel with ChangeNotifier {
 
   final FocusNode usernamenameFocusNode = FocusNode();
   final FocusNode emailFocusNode = FocusNode();
-  final FocusNode bioFocusNode = FocusNode();
+  final FocusNode phnoFocusNode = FocusNode();
   final FocusNode userNameFocusNode = FocusNode();
   String? _profileimgPath;
 
@@ -83,18 +83,21 @@ class EditProfileViewModel with ChangeNotifier {
     try {
       final userDetailViewModel = context.read<UserDetailViewmodel>();
       print(
-        "UserDetailViewmodel accessed in EditProfileViewModel: $userDetailViewModel",
+        "UserDetailViewmodel accessed in EditProfileViewModel:--- $userDetailViewModel",
       );
       final profileData = userDetailViewModel.profiledata;
-      print("Profile data in EditProfileViewModel: ${profileData?.toJson()}");
+      print(
+        "Profile data in EditProfileViewModel:---- ${profileData?.toJson()}",
+      );
 
       if (profileData?.data != null) {
         emailController.text = profileData!.data!.email ?? '';
         userNameController.text = profileData!.data!.userName ?? '';
-        bioController.text = profileData!.data!.bio ?? '';
+        // bioController.text = profileData!.data!.bio ?? '';
+        phoneController.text = profileData.data!.phoneNo ?? "";
         profilePicController.text = profileData!.data!.profilePic ?? '';
         _localImage = null; // Reset local image
-        print("Profile data initialized: ${profileData.data!.toJson()}");
+        print("Profile data initialized:----- ${profileData.data!.toJson()}");
       } else {
         print("No profile data available to initialize");
         Helper.toastMessage(
@@ -168,7 +171,19 @@ class EditProfileViewModel with ChangeNotifier {
   Future<String> _uploadImageToServer(File image) async {
     // Replace with actual API call to upload image (e.g., to Firebase Storage)
     await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-    return "https://example.com/profile_pics/${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+    List<MapEntry<String, File>>? files;
+    List<MapEntry<String, String>>? fields;
+    files!.add(MapEntry('image', image));
+
+    final response = await ProfileRepository().uploadProfilePicture(
+      fields,
+      files,
+    );
+
+    Helper.toastMessage(message: response['message'] ?? response['error']);
+
+    return response['data'];
   }
 
   // Example Firebase Storage implementation (uncomment when ready)
@@ -223,7 +238,7 @@ class EditProfileViewModel with ChangeNotifier {
       final updatedData = Data(
         email: emailController.text.trim(),
         userName: userNameController.text.trim(),
-        bio: bioController.text.trim(),
+        phoneNo: phoneController.text.trim(),
         profilePic: profilePicController.text.trim().isEmpty
             ? null
             : profilePicController.text.trim(),
@@ -238,13 +253,15 @@ class EditProfileViewModel with ChangeNotifier {
         'data': updatedData.toJson(),
       });
 
-      await Future.delayed(Duration(seconds: 10));
+      // await Future.delayed(Duration(seconds: 10));
 
       // Optionally, send data to backend API
-      await AuthRepository().updateProfile({
-        'email': emailController.text,
+      await ProfileRepository().updateProfile({
+        'profile_pic'
+                'email':
+            emailController.text,
         'username': userNameController.text,
-        'bio': bioController.text,
+        'phone_no.': phoneController.text,
         'profile_picture': profilePicController.text,
       });
 
@@ -271,7 +288,7 @@ class EditProfileViewModel with ChangeNotifier {
   void clear() {
     emailController.clear();
     userNameController.clear();
-    bioController.clear();
+    phoneController.clear();
     profilePicController.clear();
     _localImage = null;
     notifyListeners();
@@ -281,47 +298,56 @@ class EditProfileViewModel with ChangeNotifier {
   void dispose() {
     emailController.dispose();
     userNameController.dispose();
-    bioController.dispose();
+    phoneController.dispose();
     profilePicController.dispose();
     emailFocusNode.dispose();
     usernamenameFocusNode.dispose();
-    bioFocusNode.dispose();
+    phnoFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> changePassword(
-    String oldPassword,
-    String newPassword,
+    TextEditingController oldController,
+    TextEditingController newController,
+    TextEditingController confirmController,
     BuildContext context,
   ) async {
     try {
       isLoading = true;
 
       Map<String, String> data = {
-        'email': oldPassword,
-        'password': newPassword,
-
-        //  passwordController.text.trim(),
+        'old_password': oldController.text,
+        'new_password': newController.text,
       };
 
       final response = await AuthRepository().changepassword(data);
 
-      if (response['status'] = true) {
+      if (response['status'] == true) {
+        // ✅ Success
         Helper.toastMessage(
-          message: response['message'] ?? 'Something went wrong',
+          message: response['message'] ?? 'Password changed successfully',
           color: AppColors.themecolor,
         );
+
+        // Clear controllers only on success
+        oldController.clear();
+        newController.clear();
+        confirmController.clear();
+
+        if (context.mounted) {
+          Navigator.pop(context); // Close screen/dialog
+        }
       } else {
+        // ❌ Failure
         Helper.toastMessage(
-          message: 'Something went wrong',
+          message: response['message'] ?? 'Something went wrong',
           color: AppColors.red,
         );
       }
-      // Success handling (e.g., navigate to the login screen)
     } catch (e) {
       print("e-Updatepassword--->>$e");
 
-      // Error handling (e.g., display a snackbar)
+      Helper.toastMessage(message: e.toString(), color: AppColors.red);
     } finally {
       isLoading = false;
     }
@@ -381,7 +407,6 @@ class EditProfileViewModel with ChangeNotifier {
   /// Clears old cached profile images for the user
   Future<void> clearOldCachedImages(
     Directory tempDir,
-
     String currentFileName,
   ) async {
     try {
@@ -506,9 +531,9 @@ class EditProfileViewModel with ChangeNotifier {
     );
 
     if (clickedImage != null) {
-      // selectedImage = File(clickedImage.path);
+      selectedImage = File(clickedImage.path);
 
-      selectedImage = await cropImage(context, clickedImage.path, false);
+      // selectedImage = await cropImage(context, clickedImage.path, false);
 
       notifyListeners();
       return true;

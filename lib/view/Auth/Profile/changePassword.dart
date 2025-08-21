@@ -1,5 +1,5 @@
 import 'package:bid4style/Utils/ValidationHelper.dart';
-import 'package:bid4style/view/Auth/widgets/authsmallwidgets.dart';
+import 'package:bid4style/view/Auth/widgets/textsmallwidgets.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/editprofileviewmodal.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 import 'package:bid4style/viewModal/profileviewModal/profileviewmodal.dart';
@@ -65,14 +65,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           if (_formKey.currentState!.validate()) {
                             await editProfileViewModel
                                 .changePassword(
-                                  _oldPasswordController.text,
-                                  _newPasswordController.text,
+                                  _oldPasswordController,
+                                  _newPasswordController,
+                                  _confirmPasswordController,
                                   context,
                                 )
                                 .then((_) {
-                                  _oldPasswordController.clear();
-                                  _newPasswordController.clear();
-                                  _confirmPasswordController.clear();
+                                  // _oldPasswordController.clear();
+                                  // _newPasswordController.clear();
+                                  // _confirmPasswordController.clear();
                                 });
                           }
                         },

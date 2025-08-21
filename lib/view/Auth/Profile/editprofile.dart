@@ -2,7 +2,7 @@ import 'package:bid4style/Utils/Appcolor.dart';
 import 'package:bid4style/utils/ValidationHelper.dart';
 import 'package:bid4style/utils/extention.dart';
 import 'package:bid4style/utils/permisions.dart';
-import 'package:bid4style/view/Auth/widgets/authsmallwidgets.dart';
+import 'package:bid4style/view/Auth/widgets/textsmallwidgets.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/editprofileviewmodal.dart';
 import 'package:bid4style/widgets/ButtonWidget.dart';
 import 'package:bid4style/widgets/TextFieldWidget.dart';
@@ -65,9 +65,10 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: () async {
-                if (viewModel.formKey.currentState!.validate()) return;
-
-                viewModel.saveProfile(context);
+                if (viewModel.formKey.currentState!.validate()) {
+                  // ✅ Save profile only if validation passed
+                  viewModel.saveProfile(context);
+                }
               },
             ),
           ],
@@ -80,64 +81,6 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // // Circular container for profile picture
-                  // GestureDetector(
-                  //   onTap: () => _showImageOptions(context, viewModel),
-                  //   child: CircleAvatar(
-                  //     radius: 50,
-                  //     backgroundColor: AppColors.grey,
-                  //     backgroundImage:
-                  //         viewModel.profilePicController.text.isNotEmpty
-                  //         ? CachedNetworkImageProvider(
-                  //             viewModel.profilePicController.text,
-                  //           )
-                  //         : null,
-                  //     child: viewModel.profilePicController.text.isEmpty
-                  //         ? const Icon(
-                  //             Icons.person,
-                  //             size: 50,
-                  //             color: AppColors.white,
-                  //           )
-                  //         : null,
-                  //   ),
-                  // ),
-
-                  // CircleAvatar(
-                  //                           maxRadius: 40,
-                  //                           child: ClipOval(
-                  //                             child:
-
-                  //                                 // Image.network(
-                  //                                 //   context
-                  //                                 //       .read<Userdetailviewmodel>()
-                  //                                 //       .profileimg,
-                  //                                 //   fit: BoxFit.cover,
-                  //                                 //   height: 70,
-                  //                                 //   width: 70,
-                  //                                 //   errorBuilder: (BuildContext context,
-                  //                                 //       Object error,
-                  //                                 //       StackTrace? stackTrace) {
-                  //                                 //     return Image.asset(
-                  //                                 //       "assets/images/created.png",
-                  //                                 //       fit: BoxFit.cover,
-                  //                                 //     ); // Fallback asset image
-                  //                                 //   },
-                  //                                 // ),
-                  //                                 Image(
-                  //                               image: context
-                  //                                   .watch<EditProfileViewModel>()
-                  //                                   .getProfileImageProvider(),
-                  //                               fit: BoxFit.cover,
-                  //                               errorBuilder:
-                  //                                   (context, error, stackTrace) {
-                  //                                 // Fallback to asset image if there's an error
-                  //                                 return Image.asset(
-                  //                                   'assets/images/created.png',
-                  //                                   fit: BoxFit.cover,
-                  //                                 );
-                  //                               },
-                  //                             ),
-                  //                           )),
                   GestureDetector(
                     onTap: () {
                       onEditImageFunction(context, viewModel);
@@ -172,6 +115,15 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  TextDeclarationWidget(text: "Name"),
+                  TexfieldWidget(
+                    color: AppColors.white,
+                    controller: viewModel.userNameController,
+                    validator: ValidationHelper.validateName,
+                    hint: "Enter Name",
+                    focusNode: viewModel.userNameFocusNode,
+                    nextFocusNode: viewModel.emailFocusNode,
+                  ),
                   TextDeclarationWidget(text: "Email"),
                   TexfieldWidget(
                     color: AppColors.white,
@@ -179,23 +131,15 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
                     validator: ValidationHelper.validateEmail,
                     hint: "Enter your email",
                     focusNode: viewModel.emailFocusNode,
-                    nextFocusNode: viewModel.userNameFocusNode,
+                    nextFocusNode: viewModel.phnoFocusNode,
                   ),
-                  TextDeclarationWidget(text: "Username"),
+
+                  TextDeclarationWidget(text: "Phone No."),
                   TexfieldWidget(
-                    color: AppColors.white,
-                    controller: viewModel.userNameController,
-                    validator: ValidationHelper.validateName,
-                    hint: "Enter Username",
-                    focusNode: viewModel.userNameFocusNode,
-                    nextFocusNode: viewModel.bioFocusNode,
-                  ),
-                  TextDeclarationWidget(text: "Bio (Optional)"),
-                  TexfieldWidget(
-                    controller: viewModel.bioController,
-                    hint: "Bio",
-                    focusNode: viewModel.bioFocusNode,
-                    maxLine: 5,
+                    controller: viewModel.phoneController,
+                    hint: "Enter your Phone no.",
+                    validator: ValidationHelper.validatePhoneInternational,
+                    focusNode: viewModel.phnoFocusNode,
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -204,46 +148,6 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showImageOptions(BuildContext context, EditProfileViewModel viewModel) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  viewModel.pickImage(context, ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  viewModel.pickImage(context, ImageSource.gallery);
-                },
-              ),
-              if (viewModel.profilePicController.text.isNotEmpty)
-                ListTile(
-                  leading: const Icon(Icons.delete),
-                  title: const Text('Remove Photo'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    viewModel.removeProfilePicture();
-                  },
-                ),
-            ],
-          ),
-        );
-      },
     );
   }
 

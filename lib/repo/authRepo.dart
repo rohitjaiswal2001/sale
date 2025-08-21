@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bid4style/services/session_manager.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +26,7 @@ class AuthRepository {
   }
 
   Future forgetpassword(Map<String, dynamic> email) async {
+    _apiServices.token = await SharedPreferencesHelper.getToken();
     dynamic response = await _apiServices.getPostApiResponse(
       AppUrl.forgotPassword,
       email,
@@ -63,6 +65,7 @@ class AuthRepository {
   Future googleLoginApi(Map<String, String?> map) async {}
 
   Future changepassword(Map<String, dynamic> data) async {
+    _apiServices.token = await SharedPreferencesHelper.getToken();
     dynamic response = await _apiServices.getPostApiResponse(
       AppUrl.changePassword,
       data,
@@ -71,5 +74,5 @@ class AuthRepository {
     return response;
   }
 
-  Future<void> updateProfile(Map<String, String> map) async {}
+  
 }

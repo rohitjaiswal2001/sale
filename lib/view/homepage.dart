@@ -17,7 +17,7 @@ class AuctionPage extends StatelessWidget {
         builder: (context, vm, child) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text("Hi Manpreet..."),
+              title: const Text("Hi ..."),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined),
