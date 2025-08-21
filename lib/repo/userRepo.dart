@@ -98,6 +98,8 @@ class ProfileRepository {
   Future<Map<String, dynamic>> updateProfile(
     Map<String, String> mapdata,
   ) async {
+    _apiServices.token = await SharedPreferencesHelper.getToken();
+
     dynamic response = await _apiServices.getPostApiResponse(
       AppUrl.editprofile,
       mapdata,
@@ -110,6 +112,7 @@ class ProfileRepository {
     List<MapEntry<String, String>>? fields,
     List<MapEntry<String, File>>? files,
   ) async {
+    _apiServices.token = await SharedPreferencesHelper.getToken();
     dynamic response = await _apiServices.multipartPostApiResponseDio(
       fields: fields,
       files: files,

@@ -46,53 +46,20 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                              CircleAvatar(
-                                          maxRadius: 40,
-                                          child: ClipOval(
-                                            child:
+                          CircleAvatar(
+                            maxRadius: 40,
+                            minRadius: 40,
+                            backgroundColor: AppColors.grey,
+                            child: ClipOval(
+                              child: Image(
+                                image: viewModel.getProfileImageProvider(),
+                                fit: BoxFit.cover,
+                                width: 80, // match diameter
+                                height: 80, // match diameter
+                              ),
+                            ),
+                          ),
 
-                                                // Image.network(
-                                                //   context
-                                                //       .read<Userdetailviewmodel>()
-                                                //       .profileimg,
-                                                //   fit: BoxFit.cover,
-                                                //   height: 70,
-                                                //   width: 70,
-                                                //   errorBuilder: (BuildContext context,
-                                                //       Object error,
-                                                //       StackTrace? stackTrace) {
-                                                //     return Image.asset(
-                                                //       "assets/images/created.png",
-                                                //       fit: BoxFit.cover,
-                                                //     ); // Fallback asset image
-                                                //   },
-                                                // ),
-                                                Image(
-                                              image: context
-                                                  .watch<EditProfileViewModel>()
-                                                  .getProfileImageProvider(),
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                // Fallback to asset image if there's an error
-                                                return Image.asset(
-                                                  'assets/images/created.png',
-                                                  fit: BoxFit.cover,
-                                                );
-                                              },
-                                            ),
-                                          )),
-                          
-                          
-                          // CircleAvatar(
-                          //   radius: 40,
-                          //   backgroundColor: Colors.grey,
-                          //   // backgroundImage: NetworkImage(
-                          //   //   'https://example.com/avatar.jpg',
-                          //   // ), // Replace with actual image URL
-                          // ),
-                         
-                         
                           const SizedBox(height: 10),
                           Text(
                             viewModel.profiledata?.data?.userName ?? "",

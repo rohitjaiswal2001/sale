@@ -10,8 +10,13 @@ class AppUrl {
 
   //Profile
   static const String getProfile = '$baseUrl/auth/profile';
+  static const String editprofile = '$baseUrl/auth/edit-profile';
   static const String uploadprofilepicture = '$baseUrl/auth/upload-image';
-  static const String getPlan = '$baseUrl/v1/tier';
+
+  //
+  //
+  //
+  //  static const String getPlan = '$baseUrl/v1/tier';
   static const String submithelp = '$baseUrl/v1/contact-us';
   static const String updatepassword = '$baseUrl/auth/reset-password';
   static const String changePassword = '$baseUrl/auth/change-password';
@@ -22,7 +27,6 @@ class AppUrl {
   static const String Userdetail = '$baseUrl/user-detail';
   static const String deleteUser = '$baseUrl/delete?id=';
 
-  static const String editprofile = '$baseUrl/update-profile';
   static const String removepic = '$baseUrl/remove-profile-picture';
   static const String renamejournal = '$baseUrl/v1/rename-journal/';
   static const String copytoaccount = '$baseUrl/v1/copy-journal/';

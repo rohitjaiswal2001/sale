@@ -26,7 +26,7 @@ class NetworkApiService implements BaseApiServices {
       final response = await http
           .get(Uri.parse(url), headers: _getHeaders())
           .timeout(const Duration(seconds: 60));
-      responseJson = _returnResponse(response);
+      responseJson = handleResponse(response);
       print("Response--get -${jsonEncode(responseJson)}");
     } on SocketException {
       throw NoInternetException('No Internet Connection');
@@ -56,7 +56,7 @@ class NetworkApiService implements BaseApiServices {
           )
           .timeout(const Duration(seconds: 60));
 
-      responseJson = _returnResponse(response);
+      responseJson = handleResponse(response);
 
       print("Response--post -${jsonEncode(responseJson)}");
     } on SocketException {
@@ -87,7 +87,7 @@ class NetworkApiService implements BaseApiServices {
           )
           .timeout(const Duration(seconds: 60));
 
-      responseJson = _returnResponse(response);
+      responseJson = handleResponse(response);
 
       print("Response--post -${jsonEncode(responseJson)}");
     } on SocketException {
@@ -116,7 +116,7 @@ class NetworkApiService implements BaseApiServices {
           )
           .timeout(const Duration(seconds: 60));
 
-      responseJson = _returnResponse(response);
+      responseJson = handleResponse(response);
     } on SocketException {
       throw NoInternetException('No Internet Connection');
     } on TimeoutException {
@@ -143,7 +143,7 @@ class NetworkApiService implements BaseApiServices {
           )
           .timeout(const Duration(seconds: 60));
 
-      responseJson = _returnResponse(response);
+      responseJson = handleResponse(response);
     } on SocketException {
       throw NoInternetException('No Internet Connection');
     } on TimeoutException {
@@ -193,8 +193,13 @@ class NetworkApiService implements BaseApiServices {
       };
 
       if (kDebugMode) {
-        print("FormData fields: ${formData.fields}");
-        print("FormData files: ${formData.files}");
+        formData.fields.forEach((f) {
+          print("Field => key: ${f.key}, value: ${f.value}");
+        });
+
+        formData.files.forEach((f) {
+          print("File => field: ${f.key}, filename: ${f.value.filename}");
+        });
       }
 
       Response response = await dio.post(
@@ -203,7 +208,7 @@ class NetworkApiService implements BaseApiServices {
         options: Options(headers: headers, contentType: 'multipart/form-data'),
       );
 
-      responseJson = _returnResponse(response as http.Response);
+      responseJson = handleResponse(response);
     } on DioException catch (e) {
       print("Error----$e");
       if (e.response != null) {
@@ -221,6 +226,7 @@ class NetworkApiService implements BaseApiServices {
 
     return responseJson;
   }
+
   //     responseJson = _returnResponse(response as http.Response);
   //     return responseJson;
   //   } on SocketException {
@@ -278,45 +284,97 @@ class NetworkApiService implements BaseApiServices {
     };
   }
 
-  // Private method to handle responses
-  dynamic _returnResponse(http.Response response) {
-    if (kDebugMode) {
-      print("Status Code: ${response.statusCode}");
+  // // Private method to handle responses
+  // dynamic _returnResponse(http.Response response) {
+  //   if (kDebugMode) {
+  //     print("Status Code: ${response.statusCode}");
+  //   }
+
+  //   switch (response.statusCode) {
+  //     case 200:
+  //       return jsonDecode(response.body);
+  //     case 400:
+  //       Map<String, dynamic> errorResponse = jsonDecode(response.body);
+
+  //       throw UnauthorisedException(errorResponse['error']);
+  //     case 401:
+  //       Map<String, dynamic> errorResponse = jsonDecode(response.body);
+
+  //       throw UnauthorisedException(errorResponse['error']);
+
+  //     case 500:
+  //       Map<String, dynamic> errorResponse = jsonDecode(response.body);
+  //       if (errorResponse['error'] != null) {
+  //         throw UnauthorisedException(errorResponse['error']);
+  //       } else {
+  //         throw InvalidInputException("Invalid Input");
+  //       }
+  //     case 422:
+  //       Map<String, dynamic> errorResponse = jsonDecode(response.body);
+
+  //       if (errorResponse['error'] != null) {
+  //         throw UnauthorisedException(errorResponse['error']);
+  //       } else {
+  //         throw UnauthorisedException(response.body.toString());
+  //       }
+  //     case 404:
+  //       Map<String, dynamic> errorResponse = jsonDecode(response.body);
+  //       throw UnauthorisedException(errorResponse['error']);
+
+  //     default:
+  //       throw FetchDataException('Error communicating with server');
+  //   }
+  // }
+
+  dynamic handleResponse(dynamic response) {
+    int statusCode;
+    dynamic data;
+
+    if (response is http.Response) {
+      statusCode = response.statusCode;
+      data = response.body.isNotEmpty ? jsonDecode(response.body) : null;
+    } else if (response is Response) {
+      // dio.Response
+      statusCode = response.statusCode ?? 0;
+
+      if (response.data is String) {
+        try {
+          data = jsonDecode(response.data);
+        } catch (_) {
+          data = response.data;
+        }
+      } else {
+        data = response.data;
+      }
+    } else {
+      throw FetchDataException("Unsupported response type");
     }
 
-    switch (response.statusCode) {
+    if (kDebugMode) {
+      print("Status Code: $statusCode");
+      print("Response Data: $data");
+    }
+
+    switch (statusCode) {
       case 200:
-        return jsonDecode(response.body);
+      case 201:
+        return data;
       case 400:
-        Map<String, dynamic> errorResponse = jsonDecode(response.body);
-
-        throw UnauthorisedException(errorResponse['error']);
+        throw UnauthorisedException(data['error'] ?? data.toString());
       case 401:
-        Map<String, dynamic> errorResponse = jsonDecode(response.body);
-
-        throw UnauthorisedException(errorResponse['error']);
-
+        throw UnauthorisedException(data['error'] ?? data.toString());
+      case 422:
+        throw UnauthorisedException(data['error'] ?? data.toString());
+      case 404:
+        throw UnauthorisedException(data['error'] ?? "Not Found");
       case 500:
-        Map<String, dynamic> errorResponse = jsonDecode(response.body);
-        if (errorResponse['error'] != null) {
-          throw UnauthorisedException(errorResponse['error']);
+        if (data != null && data is Map && data['error'] != null) {
+          throw UnauthorisedException(data['error']);
         } else {
           throw InvalidInputException("Invalid Input");
         }
-      case 422:
-        Map<String, dynamic> errorResponse = jsonDecode(response.body);
-
-        if (errorResponse['error'] != null) {
-          throw UnauthorisedException(errorResponse['error']);
-        } else {
-          throw UnauthorisedException(response.body.toString());
-        }
-      case 404:
-        Map<String, dynamic> errorResponse = jsonDecode(response.body);
-        throw UnauthorisedException(errorResponse['error']);
-
       default:
-        throw FetchDataException('Error communicating with server');
+        throw FetchDataException("Error communicating with server");
     }
   }
 

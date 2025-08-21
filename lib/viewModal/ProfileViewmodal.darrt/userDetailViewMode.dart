@@ -1,11 +1,15 @@
 import 'dart:io';
-
 import 'package:bid4style/Models/profileModal.dart';
+import 'package:bid4style/resource/aapurl.dart';
 import 'package:bid4style/services/session_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserDetailViewmodel with ChangeNotifier {
   ProfileModel? profiledata;
+  String? _profileimgPath;
+  String _profileimgUrl = "";
+  // File? selectedImage;
 
   setProfileData(Map<String, dynamic> data) {
     try {
@@ -31,96 +35,26 @@ class UserDetailViewmodel with ChangeNotifier {
   void loadProfile() async {
     try {
       profiledata = await SharedPreferencesHelper.getUserFromPrefs();
+
+      print("Picture-----${profiledata?.data?.profilePic}");
     } catch (e) {
       print("Error setting profile data: $e");
     }
   }
 
-  void updatePassword(email, password, BuildContext context) {
+  ImageProvider getProfileImageProvider() {
+    final imageUrl = profiledata?.data?.profilePic ?? '';
+    if (imageUrl.isNotEmpty && imageUrl != "null") {
+      print("imgurl---$imageUrl");
 
-/// Returns the appropriate ImageProvider for the profile image
-  ImageProvider getProfileImageProvider({File? selectedImage}) {
-    // Prioritize locally selected image
-    if (selectedImage != null && selectedImage.existsSync()) {
-      print("Using Selected FileImage: ${selectedImage.path}");
-      return FileImage(selectedImage);
-    }
-    // Check for cached image
-    else if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
-      print("Using Cached FileImage: $_profileimgPath");
-      return FileImage(File(_profileimgPath!));
-    }
-    // Use profile URL if available and non-empty
-    else if (_profileimgUrl.isNotEmpty && _profileimgUrl != "null") {
-      print("Using NetworkImage: $_profileimgUrl");
-      return NetworkImage(_profileimgUrl);
-    }
-    // Fallback to default asset
-    else {
-      print("Using AssetImage: assets/images/created.png");
-      return AssetImage('assets/images/created.png');
-    }
-  }
+      String? profileimagefromURL = "";
+      profileimagefromURL = AppUrl.baseUrl + imageUrl;
 
-  ImageProvider? getProfileImageProviderProfileView({File? selectedImage}) {
-    // Prioritize locally selected image
-    if (selectedImage != null && selectedImage.existsSync()) {
-      print("Using Selected FileImage: ${selectedImage.path}");
-      return FileImage(selectedImage);
-    }
-    // Check for cached image
-    else if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
-      print("Using Cached FileImage: $_profileimgPath");
-      return FileImage(File(_profileimgPath!));
-    }
-    // Use profile URL if available and non-empty
-    else if (profileimgUrl.isNotEmpty && profileimgUrl != "null") {
-      print("Using NetworkImage: $_profileimgUrl");
-      return NetworkImage(_profileimgUrl);
-    }
-    // Fallback to default asset
-    else {
-      // print("Using AssetImage: assets/images/created.png");
-      return null;
-      // AssetImage('assets/images/created.png');
-    }
-  }
+      print("PROFILEimgurl---$profileimagefromURL");
 
-  /// Forces a refresh of the cached profile image
-  Future<void> refreshProfileImage() async {
-    if (_profileimgUrl.isNotEmpty) {
-      final tempDir = await getTemporaryDirectory();
-      final fileName = 'profile_${_profileimgUrl.hashCode}.jpg';
-      final filePath = '${tempDir.path}/$fileName';
-      final file = File(filePath);
-      if (await file.exists()) {
-        await file.delete();
-        print("Cleared cached image for refresh: $filePath");
-      }
-      await cacheProfileImage(_profileimgUrl);
-    }
-  }
-
-  // Method to pick an image
-  Future<bool> pickImageProfile(BuildContext context) async {
-    final picker = ImagePicker();
-    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedImage != null) {
-      selectedImage = File(pickedImage.path);
-
-      // selectedImage = await cropImage(context, pickedImage.path, false);
-
-      notifyListeners();
-      return true;
+      return NetworkImage(profileimagefromURL!);
     } else {
-      return false;
+      return const AssetImage('assets/images/created.png');
     }
   }
-
-    
-  }
-
-
-
 }

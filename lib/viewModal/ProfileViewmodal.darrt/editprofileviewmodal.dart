@@ -3,9 +3,8 @@ import 'package:bid4style/repo/authRepo.dart';
 import 'package:bid4style/repo/userRepo.dart';
 import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/utils/Helper.dart';
-import 'package:bid4style/utils/imagecropper.dart';
+
 import 'package:bid4style/utils/permissions.dart';
-import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +12,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+
+import 'userDetailViewMode.dart';
 
 class EditProfileViewModel with ChangeNotifier {
   final formKey = GlobalKey<FormState>();
@@ -24,22 +25,28 @@ class EditProfileViewModel with ChangeNotifier {
   String _profileimgUrl = "";
   File? _localImage; // Store local image file
 
-  final FocusNode usernamenameFocusNode = FocusNode();
+  final FocusNode userNameFocusNode = FocusNode();
   final FocusNode emailFocusNode = FocusNode();
   final FocusNode phnoFocusNode = FocusNode();
-  final FocusNode userNameFocusNode = FocusNode();
+
   String? _profileimgPath;
 
-  String? _imgurl;
-
-  String? get imgurl => _imgurl;
+  String? get imgurl => _profileimgUrl;
 
   set imgurl(String? value) {
-    _imgurl = value;
+    _profileimgUrl = value ?? '';
     notifyListeners();
   }
 
-  File? selectedImage;
+  File? get selectedImage => _localImage;
+
+  set selectedImage(File? value) {
+    _localImage = value;
+    notifyListeners();
+  }
+
+
+  _local
 
   final PermissionHandler _permissionHandler = PermissionHandler();
 
@@ -48,6 +55,8 @@ class EditProfileViewModel with ChangeNotifier {
   bool get isLoading => _isLoading;
 
   String get profileimgUrl => _profileimgUrl;
+
+  
 
   set profileimgUrl(String value) {
     _profileimgUrl = value;
@@ -73,31 +82,25 @@ class EditProfileViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  File? get localImage => _localImage;
-
-  // Initialize controllers with existing profile data from UserDetailViewmodel
   Future<void> initializeControllers(BuildContext context) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       final userDetailViewModel = context.read<UserDetailViewmodel>();
-      print(
-        "UserDetailViewmodel accessed in EditProfileViewModel:--- $userDetailViewModel",
-      );
+      print("UserDetailViewmodel accessed: $userDetailViewModel");
       final profileData = userDetailViewModel.profiledata;
-      print(
-        "Profile data in EditProfileViewModel:---- ${profileData?.toJson()}",
-      );
+      print("Profile data: ${profileData?.toJson()}");
 
       if (profileData?.data != null) {
         emailController.text = profileData!.data!.email ?? '';
         userNameController.text = profileData!.data!.userName ?? '';
-        // bioController.text = profileData!.data!.bio ?? '';
-        phoneController.text = profileData.data!.phoneNo ?? "";
+        phoneController.text = profileData.data!.phoneNo ?? '';
         profilePicController.text = profileData!.data!.profilePic ?? '';
-        _localImage = null; // Reset local image
-        print("Profile data initialized:----- ${profileData.data!.toJson()}");
+        _localImage = null;
+        print("Profile data initialized: ${profileData.data!.toJson()}");
+        // Mark fields as dirty after initialization
+        _markFieldsAsDirty();
       } else {
         print("No profile data available to initialize");
         Helper.toastMessage(
@@ -117,42 +120,27 @@ class EditProfileViewModel with ChangeNotifier {
     }
   }
 
-  // Pick image from camera or gallery with permission handling
+  void _markFieldsAsDirty() {
+    if (formKey.currentState != null) {
+      formKey.currentState!
+          .validate(); // Triggers validation and marks fields as dirty
+    }
+  }
+
   Future<void> pickImage(BuildContext context, ImageSource source) async {
     try {
-      bool hasPermission;
-      if (source == ImageSource.camera) {
-        hasPermission = await _permissionHandler.requestCameraPermission(
-          context,
-        );
-      } else {
-        hasPermission = await _permissionHandler.requestGalleryPermission(
-          context,
-        );
-      }
+      bool hasPermission = source == ImageSource.camera
+          ? await _permissionHandler.requestCameraPermission(context)
+          : await _permissionHandler.requestGalleryPermission(context);
 
-      if (!hasPermission) {
-        return; // Permission denied, exit
-      }
+      if (!hasPermission) return;
 
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: source);
       if (pickedFile != null) {
         _isLoading = true;
-        notifyListeners();
-
-        // Store local image file
         _localImage = File(pickedFile.path);
-        print("Local image picked: ${_localImage!.path}");
-
-        // Optionally upload to server and get URL
-        // Uncomment the following lines when ready to upload to a server
-        /*
-        final imageUrl = await _uploadImageToServer(_localImage!);
-        profilePicController.text = imageUrl;
-        print("Profile picture URL updated: $imageUrl");
-        */
-
+        notifyListeners();
         Helper.toastMessage(message: "Image selected", color: AppColors.grey);
       }
     } catch (e) {
@@ -167,43 +155,39 @@ class EditProfileViewModel with ChangeNotifier {
     }
   }
 
-  // Placeholder method to simulate image upload to server
-  Future<String> _uploadImageToServer(File image) async {
-    // Replace with actual API call to upload image (e.g., to Firebase Storage)
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-
-    List<MapEntry<String, File>>? files;
-    List<MapEntry<String, String>>? fields;
-    files!.add(MapEntry('image', image));
-
-    final response = await ProfileRepository().uploadProfilePicture(
-      fields,
-      files,
-    );
-
-    Helper.toastMessage(message: response['message'] ?? response['error']);
-
-    return response['data'];
-  }
-
-  // Example Firebase Storage implementation (uncomment when ready)
-  /*
   Future<String> _uploadImageToServer(File image) async {
     try {
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_pics/${DateTime.now().millisecondsSinceEpoch}.jpg');
-      final uploadTask = await storageRef.putFile(image);
-      final imageUrl = await uploadTask.ref.getDownloadURL();
-      return imageUrl;
+      // Simulate network delay
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Initialize lists properly
+      final files = <MapEntry<String, File>>[MapEntry('image', image)];
+      final fields = <MapEntry<String, String>>[
+        MapEntry('type', 'Profile_pic'),
+      ];
+
+      // Simulate API call to upload profile picture
+      final response = await ProfileRepository().uploadProfilePicture(
+        fields,
+        files,
+      );
+
+      // Check if response is valid (assuming it returns a Map or String)
+      if (response['status'] == true) {
+        print("Image uploaded successfully");
+        return response['data'];
+      } else {
+        print("Image upload failed: ${response['message'] ?? 'Unknown error'}");
+        throw Exception(
+          'Image upload failed: ${response['message'] ?? 'Unknown error'}',
+        );
+      }
     } catch (e) {
-      print("Error uploading image to Firebase Storage: $e");
-      throw Exception('Failed to upload image: $e');
+      print("Error uploading image: $e");
+      return ''; // Return a default value to indicate failure
     }
   }
-  */
 
-  // Remove profile picture
   Future<void> removeProfilePicture() async {
     try {
       _localImage = null;
@@ -223,16 +207,18 @@ class EditProfileViewModel with ChangeNotifier {
     }
   }
 
-  // Save profile data
-  Future<void> saveProfile(BuildContext context) async {
+  Future<void> saveEditedProfile(BuildContext context) async {
     try {
       isLoading = true;
-
-      // If local image exists, upload it to server
       String? imageUrl;
       if (_localImage != null) {
+        print("Datain Local---${_localImage}");
         imageUrl = await _uploadImageToServer(_localImage!);
-        profilePicController.text = imageUrl;
+        if (imageUrl.isNotEmpty) {
+          profilePicController.text = imageUrl;
+        } else {
+          throw Exception('Image upload failed');
+        }
       }
 
       final updatedData = Data(
@@ -245,7 +231,6 @@ class EditProfileViewModel with ChangeNotifier {
         role: context.read<UserDetailViewmodel>().profiledata?.data?.role,
       );
 
-      // Update UserDetailViewmodel
       final userDetailViewModel = context.read<UserDetailViewmodel>();
       userDetailViewModel.setProfileData({
         'status': true,
@@ -253,26 +238,18 @@ class EditProfileViewModel with ChangeNotifier {
         'data': updatedData.toJson(),
       });
 
-      // await Future.delayed(Duration(seconds: 10));
-
-      // Optionally, send data to backend API
       await ProfileRepository().updateProfile({
-        'profile_pic'
-                'email':
-            emailController.text,
-        'username': userNameController.text,
-        'phone_no.': phoneController.text,
-        'profile_picture': profilePicController.text,
+        'email': emailController.text.trim(),
+        'user_name': userNameController.text.trim(),
+        'phone_no': phoneController.text.trim(),
+        if (_localImage != null) 'profile_pic': profilePicController.text,
       });
 
       Helper.toastMessage(
         message: 'Profile updated successfully',
         color: AppColors.grey,
       );
-
-      // if (context.mounted) {
-      //   Navigator.pop(context);
-      // }
+      if (context.mounted) Navigator.pop(context);
     } catch (e) {
       print("Error saving profile: $e");
       Helper.toastMessage(
@@ -284,7 +261,6 @@ class EditProfileViewModel with ChangeNotifier {
     }
   }
 
-  // Clear all controllers
   void clear() {
     emailController.clear();
     userNameController.clear();
@@ -300,8 +276,8 @@ class EditProfileViewModel with ChangeNotifier {
     userNameController.dispose();
     phoneController.dispose();
     profilePicController.dispose();
+    userNameFocusNode.dispose();
     emailFocusNode.dispose();
-    usernamenameFocusNode.dispose();
     phnoFocusNode.dispose();
     super.dispose();
   }
@@ -314,31 +290,21 @@ class EditProfileViewModel with ChangeNotifier {
   ) async {
     try {
       isLoading = true;
-
       Map<String, String> data = {
         'old_password': oldController.text,
         'new_password': newController.text,
       };
-
       final response = await AuthRepository().changepassword(data);
-
       if (response['status'] == true) {
-        // ✅ Success
         Helper.toastMessage(
           message: response['message'] ?? 'Password changed successfully',
           color: AppColors.themecolor,
         );
-
-        // Clear controllers only on success
         oldController.clear();
         newController.clear();
         confirmController.clear();
-
-        if (context.mounted) {
-          Navigator.pop(context); // Close screen/dialog
-        }
+        if (context.mounted) Navigator.pop(context);
       } else {
-        // ❌ Failure
         Helper.toastMessage(
           message: response['message'] ?? 'Something went wrong',
           color: AppColors.red,
@@ -346,49 +312,28 @@ class EditProfileViewModel with ChangeNotifier {
       }
     } catch (e) {
       print("e-Updatepassword--->>$e");
-
       Helper.toastMessage(message: e.toString(), color: AppColors.red);
     } finally {
       isLoading = false;
     }
   }
 
-  /// Downloads the profile image from the URL, caches it, and returns the local file path
   Future<String?> cacheProfileImage(String imageUrl) async {
-    if (imageUrl.isEmpty) {
-      print("Profile image URL is empty");
-      return null;
-    }
-
+    if (imageUrl.isEmpty) return null;
     try {
       isProfileImageLoading = true;
-      // Get the temporary directory
       final tempDir = await getTemporaryDirectory();
-      // Create a unique filename based on the URL or user ID
       final fileName = 'profile_${imageUrl.hashCode}.jpg';
       final filePath = '${tempDir.path}/$fileName';
       final file = File(filePath);
-
-      // Check if the image is already cached
-      if (await file.exists()) {
-        print("Using cached profile image: $filePath");
-        return filePath;
-      }
-
-      // Clear old cached images for this user
+      if (await file.exists()) return filePath;
       await clearOldCachedImages(tempDir, fileName);
-
-      // Download the image
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
-        // Save the image to the cache
         await file.writeAsBytes(response.bodyBytes);
-        print("Profile image cached: $filePath");
         return filePath;
       } else {
         print("Failed to download image: ${response.statusCode}");
-        // Helper.toastMessage(
-        //     message: 'Failed to download profile image', color: AppColors.red);
         return null;
       }
     } catch (e) {
@@ -404,7 +349,6 @@ class EditProfileViewModel with ChangeNotifier {
     }
   }
 
-  /// Clears old cached profile images for the user
   Future<void> clearOldCachedImages(
     Directory tempDir,
     String currentFileName,
@@ -416,7 +360,6 @@ class EditProfileViewModel with ChangeNotifier {
             file.path.contains('profile_') &&
             file.path != '${tempDir.path}/$currentFileName') {
           await file.delete();
-          print("Deleted old cached image: ${file.path}");
         }
       }
     } catch (e) {
@@ -424,104 +367,64 @@ class EditProfileViewModel with ChangeNotifier {
     }
   }
 
-  /// Clears the cached profile image
   Future<void> clearCachedProfileImage() async {
     if (_profileimgPath != null) {
       try {
         final file = File(_profileimgPath!);
-        if (await file.exists()) {
-          await file.delete();
-          print("Cached profile image deleted: $_profileimgPath");
-        }
+        if (await file.exists()) await file.delete();
         _profileimgPath = null;
-        notifyListeners();
       } catch (e) {
         print("Error deleting cached profile image: $e");
+      } finally {
+        notifyListeners();
       }
     }
   }
 
-  /// Returns the appropriate ImageProvider for the profile image
   ImageProvider getProfileImageProvider({File? selectedImage}) {
-    // Prioritize locally selected image
-    if (selectedImage != null && selectedImage.existsSync()) {
-      print("Using Selected FileImage: ${selectedImage.path}");
+    if (selectedImage != null && selectedImage.existsSync())
       return FileImage(selectedImage);
-    }
-    // Check for cached image
-    else if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
-      print("Using Cached FileImage: $_profileimgPath");
+    else if (_profileimgPath != null && File(_profileimgPath!).existsSync())
       return FileImage(File(_profileimgPath!));
-    }
-    // Use profile URL if available and non-empty
-    else if (_profileimgUrl.isNotEmpty && _profileimgUrl != "null") {
-      print("Using NetworkImage: $_profileimgUrl");
+    else if (_profileimgUrl.isNotEmpty && _profileimgUrl != "null")
       return NetworkImage(_profileimgUrl);
-    }
-    // Fallback to default asset
-    else {
-      print("Using AssetImage: assets/images/created.png");
-      return AssetImage('assets/images/created.png');
-    }
+    else
+      return const AssetImage('assets/images/created.png');
   }
 
   ImageProvider? getProfileImageProviderProfileView({File? selectedImage}) {
-    // Prioritize locally selected image
-    if (selectedImage != null && selectedImage.existsSync()) {
-      print("Using Selected FileImage: ${selectedImage.path}");
+    if (selectedImage != null && selectedImage.existsSync())
       return FileImage(selectedImage);
-    }
-    // Check for cached image
-    else if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
-      print("Using Cached FileImage: $_profileimgPath");
+    else if (_profileimgPath != null && File(_profileimgPath!).existsSync())
       return FileImage(File(_profileimgPath!));
-    }
-    // Use profile URL if available and non-empty
-    else if (profileimgUrl.isNotEmpty && profileimgUrl != "null") {
-      print("Using NetworkImage: $_profileimgUrl");
+    else if (profileimgUrl.isNotEmpty && profileimgUrl != "null")
       return NetworkImage(_profileimgUrl);
-    }
-    // Fallback to default asset
-    else {
-      // print("Using AssetImage: assets/images/created.png");
+    else
       return null;
-      // AssetImage('assets/images/created.png');
-    }
   }
 
-  /// Forces a refresh of the cached profile image
   Future<void> refreshProfileImage() async {
     if (_profileimgUrl.isNotEmpty) {
       final tempDir = await getTemporaryDirectory();
       final fileName = 'profile_${_profileimgUrl.hashCode}.jpg';
       final filePath = '${tempDir.path}/$fileName';
       final file = File(filePath);
-      if (await file.exists()) {
-        await file.delete();
-        print("Cleared cached image for refresh: $filePath");
-      }
+      if (await file.exists()) await file.delete();
       await cacheProfileImage(_profileimgUrl);
     }
   }
 
-  // Method to pick an image
   Future<bool> pickImageProfile(BuildContext context) async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.gallery);
-
     if (pickedImage != null) {
-      selectedImage = File(pickedImage.path);
-
-      // selectedImage = await cropImage(context, pickedImage.path, false);
-
+      _localImage = File(pickedImage.path);
       notifyListeners();
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
-  // Method to pick an image
   Future<bool> clickImage(BuildContext context) async {
     final clicker = ImagePicker();
     final clickedImage = await clicker.pickImage(
@@ -529,35 +432,26 @@ class EditProfileViewModel with ChangeNotifier {
       imageQuality: 25,
       requestFullMetadata: false,
     );
-
     if (clickedImage != null) {
-      selectedImage = File(clickedImage.path);
-
-      // selectedImage = await cropImage(context, clickedImage.path, false);
-
+      _localImage = File(clickedImage.path);
       notifyListeners();
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
-
-  // Remove image
 
   Future<void> removeImageoption() async {
     isLoading = true;
     try {
-      selectedImage = null; // Or set the image URL to a default or empty value
+      _localImage = null;
       profileimgUrl = '';
       imgurl = null;
-      clearCachedProfileImage();
-      // function for Api call to remove photo
-      notifyListeners();
+      await clearCachedProfileImage();
+    } catch (e) {
+      print("Error removing image: $e");
     } finally {
-      profileimgPath == null;
-      selectedImage == null;
+      _profileimgPath = null;
       isLoading = false;
-
       notifyListeners();
     }
   }

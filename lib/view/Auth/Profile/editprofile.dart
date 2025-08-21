@@ -4,6 +4,7 @@ import 'package:bid4style/utils/extention.dart';
 import 'package:bid4style/utils/permisions.dart';
 import 'package:bid4style/view/Auth/widgets/textsmallwidgets.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/editprofileviewmodal.dart';
+
 import 'package:bid4style/widgets/ButtonWidget.dart';
 import 'package:bid4style/widgets/TextFieldWidget.dart';
 import 'package:bid4style/widgets/apploader.dart';
@@ -65,9 +66,17 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: () async {
+                print(
+                  "Validating form - UserName: ${viewModel.userNameController.text}",
+                );
+                print(
+                  "Validating form - Email: ${viewModel.emailController.text}",
+                );
+                print(
+                  "Validating form - Phone: ${viewModel.phoneController.text}",
+                );
                 if (viewModel.formKey.currentState!.validate()) {
-                  // ✅ Save profile only if validation passed
-                  viewModel.saveProfile(context);
+                  viewModel.saveEditedProfile(context);
                 }
               },
             ),
@@ -82,63 +91,64 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      onEditImageFunction(context, viewModel);
-                    },
+                    onTap: () => onEditImageFunction(context, viewModel),
                     child: CircleAvatar(
                       radius: 50,
                       backgroundImage: (viewModel.selectedImage != null)
                           ? FileImage(viewModel.selectedImage!)
                           : (viewModel.imgurl != null &&
                                 viewModel.imgurl!.isNotEmpty)
-                          ? context
-                                .watch<EditProfileViewModel>()
-                                .getProfileImageProviderProfileView(
-                                  selectedImage: viewModel.selectedImage,
-                                )
+                          ? viewModel.getProfileImageProviderProfileView(
+                              selectedImage: viewModel.selectedImage,
+                            )
                           : null,
                       child:
                           (viewModel.selectedImage == null &&
                               (viewModel.imgurl == null ||
-                                  viewModel.imgurl == "" ||
                                   viewModel.imgurl!.isEmpty))
                           ? const Icon(
                               Icons.camera_alt_outlined,
                               size: 50,
                               color: Colors.white,
                             )
-                          : context
-                                .watch<EditProfileViewModel>()
-                                .isProfileImageLoading
-                          ? Icon(Icons.person)
+                          : viewModel.isProfileImageLoading
+                          ? const Icon(Icons.person)
                           : null,
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextDeclarationWidget(text: "Name"),
-                  TexfieldWidget(
+                  TextFeldWidgetEdit(
                     color: AppColors.white,
                     controller: viewModel.userNameController,
-                    validator: ValidationHelper.validateName,
+                    validator: (value) {
+                      print("Validating Name: $value");
+                      return ValidationHelper.validateName(value);
+                    },
                     hint: "Enter Name",
                     focusNode: viewModel.userNameFocusNode,
                     nextFocusNode: viewModel.emailFocusNode,
                   ),
                   TextDeclarationWidget(text: "Email"),
-                  TexfieldWidget(
+                  TextFeldWidgetEdit(
                     color: AppColors.white,
                     controller: viewModel.emailController,
-                    validator: ValidationHelper.validateEmail,
+                    validator: (value) {
+                      print("Validating Email: $value");
+                      return ValidationHelper.validateEmail(value);
+                    },
                     hint: "Enter your email",
                     focusNode: viewModel.emailFocusNode,
                     nextFocusNode: viewModel.phnoFocusNode,
                   ),
-
                   TextDeclarationWidget(text: "Phone No."),
-                  TexfieldWidget(
+                  TextFeldWidgetEdit(
                     controller: viewModel.phoneController,
                     hint: "Enter your Phone no.",
-                    validator: ValidationHelper.validatePhoneInternational,
+                    validator: (value) {
+                      print("Validating Phone: $value");
+                      return ValidationHelper.validatePhoneInternational(value);
+                    },
                     focusNode: viewModel.phnoFocusNode,
                   ),
                   const SizedBox(height: 24),
@@ -188,20 +198,10 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
                   ),
                   onTap: () async {
                     bool permissionStatus = await PermissionService()
-                        .requestGalleryPermission();
-
+                        .requestCameraPermission();
                     if (!permissionStatus) return;
-
                     bool added = await viewModel.clickImage(context);
-
-                    if (added) {
-                      print("Adde--- $added");
-
-                      // Delay to avoid pop conflicts (iOS animation issue)
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
-                    }
+                    if (added && context.mounted) Navigator.pop(context);
                   },
                 ),
                 const CustomGradientDivider(),
@@ -213,16 +213,10 @@ class _EditProfileScreenState extends State<_EditProfileScreen> {
                   ),
                   onTap: () async {
                     bool permissionStatus = await PermissionService()
-                        .requestGalleryPermission();
+                        .requestPhotoPermission();
                     if (permissionStatus) {
                       bool added = await viewModel.pickImageProfile(context);
-
-                      if (added) {
-                        print("Adde--- $added");
-                        Navigator.pop(context);
-                      }
-                    } else {
-                      return;
+                      if (added) Navigator.pop(context);
                     }
                   },
                 ),

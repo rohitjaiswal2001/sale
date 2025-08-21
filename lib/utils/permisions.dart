@@ -30,38 +30,63 @@ class PermissionService {
     return await requestPermission(Permission.camera);
   }
 
-  // Request gallery (photos/videos) permission
-  Future<bool> requestGalleryPermission() async {
+  // // Request gallery (photos/videos) permission
+  // Future<bool> requestGalleryPermission() async {
+  //   if (Platform.isIOS) {
+  //     // Check both photos and media library permissions
+  //     final photoStatus = await Permission.photos.status;
+  //     final mediaStatus = await Permission.mediaLibrary.status;
+
+  //     if (photoStatus.isGranted || photoStatus.isLimited || mediaStatus.isGranted) {
+  //       return true;
+  //     }
+
+  //     final photoResult = await Permission.photos.request();
+  //     final mediaResult = await Permission.mediaLibrary.request();
+
+  //     return photoResult.isGranted || photoResult.isLimited || mediaResult.isGranted;
+  //   } else if (Platform.isAndroid) {
+  //     // Android 13+ needs separate permissions for images, videos, audio
+  //     if (await Permission.photos.isGranted ||
+  //         await Permission.videos.isGranted ||
+  //         await Permission.audio.isGranted
+  //         ) {
+  //       return true;
+  //     }
+
+  //     // Request permissions based on Android version
+  //     final photoResult = await Permission.photos.request();
+  //     final videoResult = await Permission.videos.request();
+  //     final audioResult = await Permission.audio.request();
+
+  //     if (photoResult.isGranted || videoResult.isGranted || audioResult.isGranted) {
+  //       return true;
+  //     }
+
+  //     // Fallback for older Android versions (<= Android 12)
+  //     return await requestPermission(Permission.storage);
+  //   }
+  //   return false; // Permission denied
+  // }
+
+
+  // New function for requesting only photo permission
+  Future<bool> requestPhotoPermission() async {
     if (Platform.isIOS) {
-      // Check both photos and media library permissions
-      final photoStatus = await Permission.photos.status;
-      final mediaStatus = await Permission.mediaLibrary.status;
-
-      if (photoStatus.isGranted || photoStatus.isLimited || mediaStatus.isGranted) {
+      final status = await Permission.photos.status;
+      if (status.isGranted || status.isLimited) {
         return true;
       }
-
-      final photoResult = await Permission.photos.request();
-      final mediaResult = await Permission.mediaLibrary.request();
-
-      return photoResult.isGranted || photoResult.isLimited || mediaResult.isGranted;
+      final result = await Permission.photos.request();
+      return result.isGranted || result.isLimited;
     } else if (Platform.isAndroid) {
-      // Android 13+ needs separate permissions for images, videos, audio
-      if (await Permission.photos.isGranted ||
-          await Permission.videos.isGranted ||
-          await Permission.audio.isGranted) {
+      if (await Permission.photos.isGranted) {
         return true;
       }
-
-      // Request permissions based on Android version
-      final photoResult = await Permission.photos.request();
-      final videoResult = await Permission.videos.request();
-      final audioResult = await Permission.audio.request();
-
-      if (photoResult.isGranted || videoResult.isGranted || audioResult.isGranted) {
+      final result = await Permission.photos.request();
+      if (result.isGranted) {
         return true;
       }
-
       // Fallback for older Android versions (<= Android 12)
       return await requestPermission(Permission.storage);
     }
