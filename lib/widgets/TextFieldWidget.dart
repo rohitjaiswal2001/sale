@@ -10,9 +10,13 @@ class TexfieldWidget extends StatefulWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final bool? isDisable;
+  final double? allPadding;
+  final double? allMargin;
   final bool? readonly;
   final Widget? suffix;
+  final TextStyle? hintstyle;
   final Color? color;
+  final Widget? prefixWidget;
   final int? maxLine;
   final BoxBorder? boxborder;
   final TextInputAction textInputAction;
@@ -22,6 +26,10 @@ class TexfieldWidget extends StatefulWidget {
     required this.hint,
     required this.controller,
     this.boxborder,
+    this.allMargin,
+    this.hintstyle,
+    this.allPadding,
+    this.prefixWidget,
     this.isDisable,
     this.obscureText = false,
     this.focusNode,
@@ -60,6 +68,8 @@ class _TexfieldWidgetState extends State<TexfieldWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
+                  margin: EdgeInsets.all(widget.allMargin ?? 0),
+                  padding: EdgeInsets.all(widget.allPadding ?? 0),
                   decoration: BoxDecoration(
                     color: widget.color ?? AppColors.white,
                     border:
@@ -74,12 +84,15 @@ class _TexfieldWidgetState extends State<TexfieldWidget> {
                   ),
                   child: TextFormField(
                     readOnly: widget.readonly ?? false,
+
                     focusNode: widget.focusNode,
                     obscureText: widget.obscureText && _obscureText,
                     controller: widget.controller,
                     enabled: widget.isDisable ?? true,
                     maxLines: widget.maxLine ?? 1,
                     decoration: InputDecoration(
+                      prefixIcon: widget.prefixWidget,
+
                       suffixIcon: widget.obscureText
                           ? IconButton(
                               onPressed: () {
@@ -98,10 +111,12 @@ class _TexfieldWidgetState extends State<TexfieldWidget> {
                       contentPadding: const EdgeInsets.all(15),
                       border: InputBorder.none,
                       hintText: widget.hint,
-                      hintStyle: TextStyle(
-                        color: AppColors.grey,
-                        fontWeight: FontWeight.w400,
-                      ),
+                      hintStyle:
+                          widget.hintstyle ??
+                          TextStyle(
+                            color: AppColors.grey,
+                            fontWeight: FontWeight.w400,
+                          ),
                       errorStyle: const TextStyle(height: 0),
                     ),
                     onChanged: (value) {

@@ -1,12 +1,27 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
+/// Category Model
+class AuctionCategory {
+  final int id;
+  final String name;
+
+  AuctionCategory({required this.id, required this.name});
+
+  factory AuctionCategory.fromJson(Map<String, dynamic> json) {
+    return AuctionCategory(id: json['id'], name: json['name']);
+  }
+}
+
+/// Auction Item Model
 class AuctionItem {
   final String title;
   final String price;
   final String size;
   final String location;
   final String imageUrl;
-  final String category;
 
   AuctionItem({
     required this.title,
@@ -14,64 +29,153 @@ class AuctionItem {
     required this.size,
     required this.location,
     required this.imageUrl,
-    required this.category,
   });
+
+  factory AuctionItem.fromJson(Map<String, dynamic> json) {
+    return AuctionItem(
+      title: json['title'] ?? "Untitled",
+      price: json['price']?.toString() ?? "N/A",
+      size: json['size'] ?? "-",
+      location: json['location'] ?? "-",
+      imageUrl:
+          json['image'] ??
+          "https://via.placeholder.com/150x150.png?text=No+Image",
+    );
+  }
 }
 
+/// ViewModel
 class AuctionPageViewModel extends ChangeNotifier {
-  final List<String> categories = ["All", "Shirts", "Shoes", "Trousers"];
+  List<AuctionCategory> categories = [];
+  List<AuctionItem> items = [];
+    List<OfferBanner> banners = [];
+  bool isLoadingBanners = false;
+  int _selectedCategoryId = 0; // default "All"
+  int get selectedCategoryId => _selectedCategoryId;
 
-  String _selectedCategory = "All";
-  String get selectedCategory => _selectedCategory;
+  bool isLoadingCategories = false;
+  bool isLoadingItems = false;
 
-  final List<String> banners = [
-    "https://via.placeholder.com/350x150/FF5733/FFFFFF?text=Big+Offer+1",
-    "https://via.placeholder.com/350x150/33C1FF/FFFFFF?text=Big+Offer+2",
-    "https://via.placeholder.com/350x150/8E44AD/FFFFFF?text=Big+Offer+3",
-  ];
-
-  final List<AuctionItem> _items = [
-    AuctionItem(
-      title: "Premium Shirt",
-      price: "₹ 822",
-      size: "M / 42",
-      location: "India - 95091",
-      imageUrl: "https://via.placeholder.com/150x150.png?text=Shirt",
-      category: "Shirts",
-    ),
-    AuctionItem(
-      title: "Jordan",
-      price: "₹ 1999",
-      size: "42",
-      location: "India - 95091",
-      imageUrl: "https://via.placeholder.com/150x150.png?text=Shoes",
-      category: "Shoes",
-    ),
-    AuctionItem(
-      title: "Premium Shirt",
-      price: "₹ 899",
-      size: "M / 42",
-      location: "India - 95091",
-      imageUrl: "https://via.placeholder.com/150x150.png?text=Shirt",
-      category: "Shirts",
-    ),
-    AuctionItem(
-      title: "Track Pants",
-      price: "₹ 699",
-      size: "L",
-      location: "India - 95091",
-      imageUrl: "https://via.placeholder.com/150x150.png?text=Trousers",
-      category: "Trousers",
-    ),
-  ];
-
-  List<AuctionItem> get filteredItems {
-    if (_selectedCategory == "All") return _items;
-    return _items.where((item) => item.category == _selectedCategory).toList();
+  AuctionPageViewModel() {
+    Future.microtask(() async {
+      await fetchCategories();
+    });
   }
 
-  void selectCategory(String category) {
-    _selectedCategory = category;
+  /// Fetch carousel banners
+  Future<void> fetchBanners() async {
+    try {
+      isLoadingBanners = true;
+      notifyListeners();
+
+      final response = await http.get(
+        Uri.parse("https://bid4stylepgre.visionvivante.in/cms/list-offers"),
+      );
+
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body);
+        if (body["status"] == true && body["data"] != null) {
+          banners = (body["data"] as List)
+              .map((e) => OfferBanner.fromJson(e))
+              .toList();
+        }
+      }
+    } catch (e) {
+      debugPrint("fetchBanners error: $e");
+    } finally {
+      isLoadingBanners = false;
+      notifyListeners();
+    }
+  }
+
+  /// Fetch categories from API
+  Future<void> fetchCategories() async {
+    isLoadingCategories = true;
     notifyListeners();
+
+    try {
+      final response = await http.get(
+        Uri.parse("https://bid4stylepgre.visionvivante.in/item/category-list"),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        categories = (data['data'] as List)
+            .map((e) => AuctionCategory.fromJson(e))
+            .toList();
+
+        // default select first category
+        if (categories.isNotEmpty) {
+          _selectedCategoryId = categories.first.id;
+          await fetchItemsForCategory(_selectedCategoryId);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching categories: $e");
+    }
+
+    isLoadingCategories = false;
+    notifyListeners();
+  }
+
+  /// Fetch items for selected category
+  Future<void> fetchItemsForCategory(int categoryId) async {
+    _selectedCategoryId = categoryId;
+    isLoadingItems = true;
+    notifyListeners();
+
+    try {
+      String url =
+          "https://bid4stylepgre.visionvivante.in/item/list?category_id=$categoryId";
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        items = (data['data'] as List)
+            .map((e) => AuctionItem.fromJson(e))
+            .toList();
+      } else {
+        items = [];
+      }
+    } catch (e) {
+      debugPrint("Error fetching items: $e");
+      items = [];
+    }
+
+    isLoadingItems = false;
+    notifyListeners();
+  }
+}
+
+class OfferBanner {
+  final int id;
+  final String name;
+  final String imageUrl;
+  final String title;
+  final String subtitle;
+
+  OfferBanner({
+    required this.id,
+    required this.name,
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+  });
+
+  factory OfferBanner.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> content =
+        (json["content"] is Map<String, dynamic>) ? json["content"] : {};
+
+    return OfferBanner(
+      id: json["id"] ?? 0,
+      name: json["name"] ?? "",
+      imageUrl:
+          "https://bid4stylepgre.visionvivante.in${content["image"] ?? ""}",
+      title: content["title"] ?? "",
+      subtitle: content["subtitle"] ?? "",
+    );
   }
 }

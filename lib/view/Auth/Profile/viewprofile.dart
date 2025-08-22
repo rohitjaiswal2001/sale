@@ -19,14 +19,31 @@ import 'package:bid4style/widgets/apploader.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load profile once when the screen is first built
+    Future.microtask(() {
+      final viewModel = Provider.of<UserDetailViewmodel>(
+        context,
+        listen: false,
+      );
+      viewModel.loadProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<UserDetailViewmodel>(
       builder: (context, viewModel, child) {
-        viewModel.loadProfile();
         return Scaffold(
           body: Column(
             children: [
@@ -35,7 +52,6 @@ class ProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(0),
                   children: [
                     Container(
-                      // padding:
                       height: 250,
                       decoration: const BoxDecoration(
                         image: DecorationImage(
@@ -59,7 +75,6 @@ class ProfileScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 10),
                           Text(
                             viewModel.profiledata?.data?.userName ?? "",

@@ -1,6 +1,7 @@
 import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/view/BidManagment/createBid.dart';
 import 'package:bid4style/widgets/CustomTextstyle.dart';
+import 'package:bid4style/widgets/filterChip.dart';
 import 'package:flutter/material.dart';
 
 // Customizable Bid Management Screen widget
@@ -84,58 +85,17 @@ class _BidManagementScreenState extends State<BidManagementScreen> {
                   ),
                 ),
                 const SizedBox(height: 16.0),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: widget.tabTitles.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final title = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: FilterChip(
-                          label: Text(title),
-                          labelStyle: TextStyle(
-                            color: _selectedIndex == index
-                                ? AppColors.themecolor
-                                : widget.unselectedLabelColor,
-                            fontSize: 14,
-                          ),
-                          showCheckmark: false,
 
-                          backgroundColor: _selectedIndex == index
-                              ? widget.indicatorColor
-                              : Colors.grey[200],
-                          selected: _selectedIndex == index,
-                          onSelected: (bool value) {
-                            setState(() {
-                              _selectedIndex = index;
-                            });
-                          },
-                          checkmarkColor: AppColors.themecolor,
-
-                          disabledColor: AppColors.red,
-                          selectedColor: AppColors.green,
-                          selectedShadowColor: AppColors.blue,
-                          surfaceTintColor: AppColors.green,
-                          // shadowColor: Colors.red,
-                          color: WidgetStatePropertyAll(Colors.white),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            side: BorderSide(
-                              color: _selectedIndex == index
-                                  ? widget.indicatorColor
-                                  : Colors.grey[300]!,
-                              width: 1,
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8.0,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                BidTabChips(
+                  tabTitles: widget.tabTitles,
+                  selectedIndex: _selectedIndex,
+                  indicatorColor: widget.indicatorColor,
+                  unselectedLabelColor: widget.unselectedLabelColor,
+                  onTabSelected: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
                 ),
               ],
             ),

@@ -45,9 +45,6 @@ class EditProfileViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-
-  _local
-
   final PermissionHandler _permissionHandler = PermissionHandler();
 
   bool _isLoading = false;
@@ -55,8 +52,6 @@ class EditProfileViewModel with ChangeNotifier {
   bool get isLoading => _isLoading;
 
   String get profileimgUrl => _profileimgUrl;
-
-  
 
   set profileimgUrl(String value) {
     _profileimgUrl = value;
