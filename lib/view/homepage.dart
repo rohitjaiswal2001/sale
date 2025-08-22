@@ -270,7 +270,7 @@ class _AuctionPageState extends State<AuctionPage> {
                                   ),
                                   child: CachedNetworkImage(
                                     imageUrl: item.imageUrl,
-                                    height: 120,
+                                    height: 100,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) =>
@@ -283,12 +283,21 @@ class _AuctionPageState extends State<AuctionPage> {
                                             height: 120,
                                           ),
                                         ),
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(
-                                          Icons.error,
-                                          size: 50,
-                                          color: Colors.red,
-                                        ),
+                                    errorWidget: (context, z, error) {
+                                      print("IMAGE URL----${item.imageUrl}");
+                                      return Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.error,
+                                            size: 20,
+                                            color: Colors.grey,
+                                          ),
+                                          Text("Failed to load"),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ),
                                 Padding(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bid4style/resource/aapurl.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -34,12 +35,15 @@ class AuctionItem {
   factory AuctionItem.fromJson(Map<String, dynamic> json) {
     return AuctionItem(
       title: json['title'] ?? "Untitled",
-      price: json['price']?.toString() ?? "N/A",
+      price: json['original_retail_price']?.toString() ?? "N/A",
       size: json['size'] ?? "-",
       location: json['location'] ?? "-",
       imageUrl:
-          json['image'] ??
-          "https://via.placeholder.com/150x150.png?text=No+Image",
+          (json['image_urls'] != null &&
+              json['image_urls'] is List &&
+              json['image_urls'].isNotEmpty)
+          ? AppUrl.baseUrl + json['image_urls'][0]
+          : "https://via.placeholder.com/150x150.png?text=No+Image",
     );
   }
 }
@@ -48,7 +52,7 @@ class AuctionItem {
 class AuctionPageViewModel extends ChangeNotifier {
   List<AuctionCategory> categories = [];
   List<AuctionItem> items = [];
-    List<OfferBanner> banners = [];
+  List<OfferBanner> banners = [];
   bool isLoadingBanners = false;
   int _selectedCategoryId = 0; // default "All"
   int get selectedCategoryId => _selectedCategoryId;
@@ -127,7 +131,8 @@ class AuctionPageViewModel extends ChangeNotifier {
 
     try {
       String url =
-          "https://bid4stylepgre.visionvivante.in/item/list?category_id=$categoryId";
+          // "https://bid4stylepgre.visionvivante.in/item/list?category_id=$categoryId";
+          "https://bid4stylepgre.visionvivante.in/item/list?category_id=9";
 
       final response = await http.get(Uri.parse(url));
 
