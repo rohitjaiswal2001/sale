@@ -194,10 +194,8 @@ class UserDetailViewmodel with ChangeNotifier {
   // --- Image Provider ---
   ImageProvider getProfileImageProvider() {
     if (_profileimgPath != null && File(_profileimgPath!).existsSync()) {
-      notifyListeners();
       return FileImage(File(_profileimgPath!));
     } else if (_profileimgUrl.isNotEmpty && _profileimgUrl != "null") {
-      notifyListeners();
       return NetworkImage(_profileimgUrl);
     } else {
       return const AssetImage('assets/images/created.png');

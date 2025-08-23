@@ -5,6 +5,7 @@ import 'package:bid4style/utils/Appcolor.dart';
 import 'package:bid4style/view/Auth/Profile/viewprofile.dart';
 import 'package:bid4style/view/homepage.dart';
 import 'package:bid4style/viewModal/DashboardViewModel/dashboardviewmodel.dart';
+import 'package:bid4style/viewModal/ProductViewModal/productdetailProvider.dart';
 
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 import 'package:bid4style/viewModal/profileviewModal/profileviewmodal.dart';
@@ -51,7 +52,8 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserDetailViewmodel()),
 
-            ChangeNotifierProvider(create: (_) => AuctionPageViewModel()),
+        ChangeNotifierProvider(create: (_) => AuctionPageViewModel()),
+        ChangeNotifierProvider(create: (_) => ProductDetailViewModel()),
         // Add other providers as needed
         // ChangeNotifierProvider(create: (_) => ProfileViewModel()),
       ],

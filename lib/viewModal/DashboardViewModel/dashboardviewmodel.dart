@@ -23,21 +23,25 @@ class AuctionItem {
   final String size;
   final String location;
   final String imageUrl;
+  final String slug;
 
   AuctionItem({
     required this.title,
     required this.price,
     required this.size,
     required this.location,
+    required this.slug,
     required this.imageUrl,
   });
 
   factory AuctionItem.fromJson(Map<String, dynamic> json) {
     return AuctionItem(
       title: json['title'] ?? "Untitled",
+
       price: json['original_retail_price']?.toString() ?? "N/A",
       size: json['size'] ?? "-",
       location: json['location'] ?? "-",
+      slug: json['slug'] ?? "-",
       imageUrl:
           (json['image_urls'] != null &&
               json['image_urls'] is List &&

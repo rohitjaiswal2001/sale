@@ -1,4 +1,5 @@
 import 'package:bid4style/utils/extention.dart';
+import 'package:bid4style/view/ProductDetail/productdetail.dart';
 import 'package:bid4style/viewModal/DashboardViewModel/dashboardviewmodel.dart';
 import 'package:bid4style/viewModal/ProfileViewmodal.darrt/userDetailViewMode.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -20,18 +21,37 @@ class AuctionPage extends StatefulWidget {
 }
 
 class _AuctionPageState extends State<AuctionPage> {
-  final ScrollController _scrollController = ScrollController();
-  int _currentCarouselIndex = 0;
+  final ScrollController _outerController = ScrollController();
+  final ScrollController _gridController = ScrollController();
+  bool _gridAtTop = true;
+  ValueNotifier<int> _currentCarouselIndex = ValueNotifier(0);
 
   @override
   void initState() {
     super.initState();
-    // Fetch carousel + categories + initial items when screen loads
     Future.microtask(() {
       final vm = context.read<AuctionPageViewModel>();
       vm.fetchBanners();
       vm.fetchCategories();
     });
+    Future.microtask(() {
+      Provider.of<UserDetailViewmodel>(context, listen: false).loadProfile();
+    });
+    _gridController.addListener(() {
+      if (_gridController.offset <= 0) {
+        _gridAtTop = true;
+      } else {
+        _gridAtTop = false;
+      }
+    });
+  }
+
+  void _scrollOuterToTop() {
+    _outerController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -41,25 +61,26 @@ class _AuctionPageState extends State<AuctionPage> {
       builder: (context, vm, _) {
         return Scaffold(
           appBar: AppBar(
-            title: Row(
-              children: [
-                // Profile Image
-                CircleAvatar(
-                  radius: 18,
-                  backgroundImage: userVM.getProfileImageProvider(),
-                ),
-                const SizedBox(width: 8),
-                // Hi and User Name
-                Container(
-                  width: context.mediaQueryWidth * 0.3,
-                  child: Text(
-                    "Hi ${userVM.profiledata?.data?.userName ?? ''}",
-
-                    overflow: TextOverflow.ellipsis,
-                    style: CustomTextStyle.heading20,
-                  ),
-                ),
-              ],
+            title: Consumer<UserDetailViewmodel>(
+              builder: (context, userVM, child) {
+                return Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundImage: userVM.getProfileImageProvider(),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: context.mediaQueryWidth * 0.3,
+                      child: Text(
+                        "Hi ${userVM.profiledata?.data?.userName ?? ''}",
+                        overflow: TextOverflow.ellipsis,
+                        style: CustomTextStyle.heading20,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             actions: [
               IconButton(
@@ -68,10 +89,9 @@ class _AuctionPageState extends State<AuctionPage> {
               ),
             ],
           ),
-          body: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // 🔍 Search bar
+          body: NestedScrollView(
+            controller: _outerController,
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
               SliverToBoxAdapter(
                 child: TexfieldWidget(
                   allMargin: 10,
@@ -94,8 +114,6 @@ class _AuctionPageState extends State<AuctionPage> {
                   ),
                 ),
               ),
-
-              // 🖼 Carousel
               SliverToBoxAdapter(
                 child: vm.isLoadingBanners
                     ? Shimmer.fromColors(
@@ -126,9 +144,7 @@ class _AuctionPageState extends State<AuctionPage> {
                               enlargeCenterPage: true,
                               viewportFraction: 0.9,
                               onPageChanged: (index, reason) {
-                                setState(() {
-                                  _currentCarouselIndex = index;
-                                });
+                                _currentCarouselIndex.value = index;
                               },
                             ),
                             items: vm.banners.map((banner) {
@@ -172,30 +188,33 @@ class _AuctionPageState extends State<AuctionPage> {
                             }).toList(),
                           ),
                           const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: vm.banners.asMap().entries.map((e) {
-                              return Container(
-                                width: 8,
-                                height: 8,
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                  horizontal: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _currentCarouselIndex == e.key
-                                      ? AppColors.themecolor
-                                      : Colors.grey,
-                                ),
+                          ValueListenableBuilder<int>(
+                            valueListenable: _currentCarouselIndex,
+                            builder: (context, value, child) {
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: vm.banners.asMap().entries.map((e) {
+                                  return Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                      horizontal: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: value == e.key
+                                          ? AppColors.themecolor
+                                          : Colors.grey,
+                                    ),
+                                  );
+                                }).toList(),
                               );
-                            }).toList(),
+                            },
                           ),
                         ],
                       ),
               ),
-
-              // ⏳ Auction Banner
               SliverToBoxAdapter(
                 child: AuctionBanner(
                   endTime: DateTime.now().add(
@@ -204,48 +223,89 @@ class _AuctionPageState extends State<AuctionPage> {
                   imageUrl: "assets/images/timebanner.png",
                 ),
               ),
-
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // 🏷 Categories Chips (Sticky)
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _SliverTabBarDelegate(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: vm.isLoadingCategories
-                        ? const Center(child: CircularProgressIndicator())
-                        : BidTabChips(
-                            tabTitles: vm.categories
-                                .map((c) => c.name)
-                                .toList(),
-                            selectedIndex: vm.categories.indexWhere(
-                              (c) => c.id == vm.selectedCategoryId,
+                  child: Container(
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: vm.isLoadingCategories
+                          ? Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Container(
+                                height: 44, // Approximate height of chips row
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            )
+                          : BidTabChips(
+                              tabTitles: vm.categories
+                                  .map((c) => c.name)
+                                  .toList(),
+                              selectedIndex: vm.categories.indexWhere(
+                                (c) => c.id == vm.selectedCategoryId,
+                              ),
+                              indicatorColor: AppColors.themecolor,
+                              unselectedLabelColor: Colors.grey,
+                              onTabSelected: (index) {
+                                final cat = vm.categories[index];
+                                vm.fetchItemsForCategory(cat.id);
+                              },
                             ),
-                            indicatorColor: AppColors.themecolor,
-                            unselectedLabelColor: Colors.grey,
-                            onTabSelected: (index) {
-                              final cat = vm.categories[index];
-                              vm.fetchItemsForCategory(cat.id);
-                            },
-                          ),
+                    ),
                   ),
                 ),
               ),
-
-              // 📦 Product Grid
-              SliverFillRemaining(
-                hasScrollBody: true,
-                child: vm.isLoadingItems
-                    ? const Center(child: CircularProgressIndicator())
-                    : vm.items.isEmpty
-                    ? const Center(
-                        child: Text(
-                          "No items found",
-                          style: TextStyle(color: Colors.grey),
+            ],
+            body: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollUpdateNotification &&
+                    notification.metrics.pixels <= 0 &&
+                    notification.metrics.axis == Axis.vertical &&
+                    _gridAtTop &&
+                    notification.scrollDelta! < 0) {
+                  _scrollOuterToTop();
+                  return true;
+                }
+                return false;
+              },
+              child: CustomScrollView(
+                controller: _gridController,
+                slivers: [
+                  SliverList(
+                    delegate: SliverChildListDelegate([
+                      if (vm.isLoadingItems)
+                        Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(
+                            height:
+                                200, // Approximate height for grid item placeholder
+                            margin: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        )
+                      else if (vm.items.isEmpty)
+                        const Center(
+                          child: Text(
+                            "No items found",
+                            style: TextStyle(color: Colors.grey),
+                          ),
                         ),
-                      )
-                    : GridView.builder(
+                    ]),
+                  ),
+                  if (!vm.isLoadingItems && vm.items.isNotEmpty)
+                    SliverFillRemaining(
+                      child: GridView.builder(
+                        controller: _gridController,
                         padding: const EdgeInsets.all(8),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
@@ -257,94 +317,108 @@ class _AuctionPageState extends State<AuctionPage> {
                         itemCount: vm.items.length,
                         itemBuilder: (context, index) {
                           final item = vm.items[index];
-                          return Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(12),
-                                  ),
-                                  child: CachedNetworkImage(
-                                    imageUrl: item.imageUrl,
-                                    height: 100,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) =>
-                                        Shimmer.fromColors(
-                                          baseColor: Colors.grey[300]!,
-                                          highlightColor: Colors.grey[100]!,
-                                          child: Container(
-                                            color: Colors.grey[300],
-                                            width: double.infinity,
-                                            height: 120,
+                          return GestureDetector(
+                            onTap: () {
+                              print("ITEM SLUG----${item.slug}");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailPage(slug: item.slug),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(12),
+                                    ),
+                                    child: CachedNetworkImage(
+                                      imageUrl: item.imageUrl,
+                                      height: 100,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) =>
+                                          Shimmer.fromColors(
+                                            baseColor: Colors.grey[300]!,
+                                            highlightColor: Colors.grey[100]!,
+                                            child: Container(
+                                              color: Colors.grey[300],
+                                              width: double.infinity,
+                                              height: 120,
+                                            ),
                                           ),
-                                        ),
-                                    errorWidget: (context, z, error) {
-                                      print("IMAGE URL----${item.imageUrl}");
-                                      return Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.error,
-                                            size: 20,
-                                            color: Colors.grey,
-                                          ),
-                                          Text("Failed to load"),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    item.title,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                      errorWidget: (context, z, error) {
+                                        print("IMAGE URL----${item.imageUrl}");
+                                        return Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.error,
+                                              size: 20,
+                                              color: Colors.grey,
+                                            ),
+                                            const Text("Failed to load"),
+                                          ],
+                                        );
+                                      },
                                     ),
                                   ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Text(
-                                    "Current Bid ${item.price}",
-                                    style: const TextStyle(
-                                      color: Colors.orange,
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      item.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Text("Size - ${item.size}"),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Text(
-                                    item.location,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Text(
+                                      "Current Bid ${item.price}",
+                                      style: const TextStyle(
+                                        color: Colors.orange,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Text("Size - ${item.size}"),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Text(
+                                      item.location,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
                       ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },
@@ -352,9 +426,9 @@ class _AuctionPageState extends State<AuctionPage> {
   }
 }
 
-// Sticky Header delegate
 class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
+
   _SliverTabBarDelegate({required this.child});
 
   @override
@@ -363,7 +437,7 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return child;
+    return Container(color: Colors.white, child: child);
   }
 
   @override
@@ -373,6 +447,6 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _SliverTabBarDelegate oldDelegate) {
-    return true;
+    return child != oldDelegate.child;
   }
 }
